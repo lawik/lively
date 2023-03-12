@@ -36,6 +36,18 @@ let hooks = {
                 console.log('Reeeejected!', e);
             };
 
+            this.handleEvent("go-to-slide", ({ slide }) => {
+                Reveal.slide(slide, 0, 0)
+            })
+
+            this.handleEvent("next-slide", () => {
+                Reveal.right()
+            })
+
+            this.handleEvent("previous-slide", () => {
+                Reveal.left()
+            })
+
             // Not showing vendor prefixes.
             navigator.getUserMedia({ video: true, audio: false }, function (localMediaStream) {
                 console.log(localMediaStream)
@@ -50,6 +62,16 @@ let hooks = {
                     // Ready to go. Do some stuff.
                 };
             }, errorCallback);
+
+            // More info about initialization & config:
+            // - https://revealjs.com/initialization/
+            // - https://revealjs.com/config/
+            Reveal.initialize({
+                hash: true,
+
+                // Learn about plugins: https://revealjs.com/plugins/
+                plugins: [RevealMarkdown, RevealHighlight, RevealNotes]
+            });
         }
     }
 }

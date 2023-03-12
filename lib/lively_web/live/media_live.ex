@@ -9,7 +9,24 @@ defmodule LivelyWeb.MediaLive do
     socket = assign(socket, pipeline: nil, transcripts: [], levels: %{}, slide: 1)
     # DEV mode
     if connected?(socket) do
-      {:noreply, socket} = play_pause("5", "mic", socket)
+      socket =
+        if System.get_env("DESIGN_MODE") == "true" do
+          levels =
+            Enum.reduce(0..1, %{}, fn i, acc ->
+              ls = 1..100 |> Enum.map(fn _ -> -:rand.uniform(50) end)
+              Map.put(acc, i, ls)
+            end)
+
+          assign(socket,
+            pipeline: :fake,
+            transcripts: [{0, 5000, "This is great"}, {5001, 10000, "So good."}],
+            levels: levels
+          )
+        else
+          {:noreply, socket} = play_pause("5", "mic", socket)
+          socket
+        end
+
       {:ok, socket}
     else
       {:ok, socket}
@@ -107,7 +124,7 @@ defmodule LivelyWeb.MediaLive do
         |> IO.inspect(label: "parsed integer")
         |> case do
           :error -> socket
-          {num, _} -> assign(socket, slide: num)
+          {num, _} -> push_event(socket, "go-to-slide", %{slide: num})
         end
       else
         socket
@@ -115,14 +132,14 @@ defmodule LivelyWeb.MediaLive do
 
     socket =
       if String.contains?(lower, "slide forward") do
-        assign(socket, slide: socket.assigns.slide + 1)
+        push_event(socket, "next-slide", {})
       else
         socket
       end
 
     socket =
       if String.contains?(lower, "slide back") do
-        assign(socket, slide: socket.assigns.slide - 1)
+        push_event(socket, "previous-slide", {})
       else
         socket
       end
@@ -241,34 +258,50 @@ defmodule LivelyWeb.MediaLive do
     ~H"""
     <!-- Video as background -->
     <div class="absolute top-0 left-0 w-screen h-screen overflow-hidden">
-    <video
-      class="absolute top-0 left-0 w-screen h-screen object-cover"
-      id="video-preview"
-      phx-hook="video"
-      autoplay
-    >
-    </video>
-    <div><%= @slide %></div>
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 1600 900"
-            stroke-width="4"
-            stroke="currentColor"
-            class="absolute top-0 left-0 stroke-white opacity-25"
-            preserveAspectRatio="xMidYMin slice"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              d={levels_to_draw_commands(@levels)}
-            />
-          </svg>
+      <video
+        class="absolute top-0 left-0 w-screen h-screen object-cover"
+        id="video-preview"
+        phx-hook="video"
+        autoplay
+      >
+      </video>
+      <div><%= @slide %></div>
+      <div class="reveal">
+        <div class="slides">
+          <section data-markdown>
+            <textarea data-template>
+    ## Slide 1
+
+    A paragraph with some text and a [link](https://hakim.se).
+
+    ---
+
+    ## Slide 2
+
+    ---
+
+    ## Slide 3
+
+    </textarea>
+          </section>
+        </div>
+      </div>
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        fill="none"
+        viewBox="0 0 1600 900"
+        stroke-width="4"
+        stroke="currentColor"
+        class="absolute top-0 left-0 stroke-white opacity-25"
+        preserveAspectRatio="xMidYMin slice"
+      >
+        <path stroke-linecap="round" stroke-linejoin="round" d={levels_to_draw_commands(@levels)} />
+      </svg>
     </div>
     <!-- overlay covering full area -->
     <div class="absolute top-0 left-0 w-screen h-screen">
       <form phx-submit="action">
-      <!--
+        <!--
         <label>
           Buffer duration, seconds<br />
           <input type="text" name="buffer_duration" value="5" />
@@ -285,21 +318,21 @@ defmodule LivelyWeb.MediaLive do
         -->
       </form>
     </div>
-      <div class="absolute min-w-full min-h-[48px] bottom-0 right-0 text-right overflow-hidden flex flex-nowrap bg-black text-white opacity-70 justify-end">
-        <span
-          :for={{{start, stop, text}, index} <- @transcripts |> Enum.with_index() |> Enum.take(-50)}
-          class="inline-block mr-1 whitespace-nowrap"
-        >
-          <%= if not is_nil(text) do %>
+    <div class="absolute min-w-full min-h-[48px] bottom-0 right-0 text-right overflow-hidden flex flex-nowrap bg-black text-white opacity-70 justify-end">
+      <span
+        :for={{{start, stop, text}, index} <- @transcripts |> Enum.with_index() |> Enum.take(-50)}
+        class="inline-block mr-1 whitespace-nowrap"
+      >
+        <%= if not is_nil(text) do %>
           <div class="flex text-xs text-gray-400 gap-4">
             <span class="mr-auto"><%= round(start / 1000) %></span>
           </div>
           <div>
             <%= text %>
           </div>
-          <% end %>
-        </span>
-      </div>
+        <% end %>
+      </span>
+    </div>
     """
   end
 end

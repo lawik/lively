@@ -7,11 +7,25 @@
     <.live_title suffix=" · Phoenix Framework">
       <%= assigns[:page_title] || "Lively" %>
     </.live_title>
+    <link rel="stylesheet" href={~p"/reveal/reset.css"} />
     <link phx-track-static rel="stylesheet" href={~p"/assets/app.css"} />
+    <link rel="stylesheet" href={~p"/reveal/reveal.css"} />
+    <link rel="stylesheet" href={~p"/reveal/theme/black.css"} />
+    <link rel="stylesheet" href={~p"/reveal/space-grotesk-semibold.woff2"} />
+    <!-- Theme used for syntax highlighted code -->
+    <link rel="stylesheet" href={~p"/reveal/plugin/highlight/monokai.css"} />
     <script defer phx-track-static type="text/javascript" src={~p"/assets/app.js"}>
     </script>
   </head>
   <body class="bg-white antialiased">
     <%= @inner_content %>
+    <script src={~p"/reveal/reveal.js"}>
+    </script>
+    <script src={~p"/reveal/plugin/notes/notes.js"}>
+    </script>
+    <script src={~p"/reveal/plugin/markdown/markdown.js"}>
+    </script>
+    <script src={~p"/reveal/plugin/highlight/highlight.js"}>
+    </script>
   </body>
 </html>
