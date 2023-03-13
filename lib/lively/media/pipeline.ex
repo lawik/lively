@@ -51,7 +51,8 @@ defmodule Lively.Media.Pipeline do
           bytes_per_second: @byte_per_second
         },
         transcription: %MembraneTranscription.Element{
-          buffer_duration: buffer_duration
+          buffer_duration: buffer_duration,
+          fancy?: true
         },
         # better_transcription: %MembraneTranscription.Element{
         #   buffer_duration: 10

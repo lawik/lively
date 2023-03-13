@@ -39,5 +39,4 @@ npm-debug.log
 *.db
 *.db-*
 
-priv/hero_icons
 priv/samples
