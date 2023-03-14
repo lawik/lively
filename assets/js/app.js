@@ -68,6 +68,12 @@ let hooks = {
             // - https://revealjs.com/config/
             Reveal.initialize({
                 hash: true,
+                center: false,
+                embedded: true,
+                controls: false,
+                progress: false,
+                width: "100%",
+                height: "100%",
 
                 // Learn about plugins: https://revealjs.com/plugins/
                 plugins: [RevealMarkdown, RevealHighlight, RevealNotes]

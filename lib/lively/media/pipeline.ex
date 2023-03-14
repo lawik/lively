@@ -32,7 +32,7 @@ defmodule Lively.Media.Pipeline do
               link(:mic)
             end,
             %{
-              mic: %Membrane.PortAudio.Source{endpoint_id: :default}
+              mic: %Membrane.PortAudio.Source{}
             }
           }
       end

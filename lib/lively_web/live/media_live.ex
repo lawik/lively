@@ -24,6 +24,7 @@ defmodule LivelyWeb.MediaLive do
           )
         else
           {:noreply, socket} = play_pause("5", "mic", socket)
+          # {:noreply, socket} = play_pause("5", "file", socket)
           socket
         end
 
@@ -215,6 +216,50 @@ defmodule LivelyWeb.MediaLive do
       |> Enum.concat(for _ <- 1..@use_samples, do: 50)
       |> Enum.take(@use_samples)
       |> Enum.reverse()
+      |> Enum.take_every(2)
+
+    samples = Enum.count(level)
+
+    if samples > 0 do
+      point = @width / samples
+
+      first =
+        case level do
+          [h | _] ->
+            a = amp_to_one(h)
+            "M0 #{r(a * @height)}"
+
+          [] ->
+            ""
+        end
+
+      cmds =
+        level
+        |> Enum.with_index()
+        |> Enum.map(fn {amp, i} ->
+          a = amp_to_one(amp)
+          # IO.inspect({a, a * @height, @height - a * @height})
+          "M#{r(point * i)} #{r(a * @height)}V#{r(@height - a * @height)}"
+        end)
+        |> Enum.join("")
+
+      first <> cmds
+    else
+      ""
+    end
+  end
+
+  defp levels_to_draw_commands_2(levels) do
+    amount = Enum.count(levels)
+
+    level =
+      amount..0
+      |> Enum.flat_map(fn index ->
+        Map.get(levels, index, [])
+      end)
+      |> Enum.concat(for _ <- 1..@use_samples, do: 50)
+      |> Enum.take(@use_samples)
+      |> Enum.reverse()
 
     samples = Enum.count(level)
 
@@ -265,22 +310,113 @@ defmodule LivelyWeb.MediaLive do
         autoplay
       >
       </video>
-      <div><%= @slide %></div>
-      <div class="reveal">
+      <div class="reveal" style="width: 50vw;">
         <div class="slides">
           <section data-markdown>
             <textarea data-template>
-    ## Slide 1
+    ## Lively Membranes
 
-    A paragraph with some text and a [link](https://hakim.se).
-
-    ---
-
-    ## Slide 2
 
     ---
 
-    ## Slide 3
+    ## Since the 90s
+
+    - Self-taught developer, grew up doing web dev
+    - Mixing technically interesting work with visually interesting work
+    - Driven by realizing ideas, implementation, not theory
+    - Are cool things naturally hard to do? Or are hard things simply cool?
+    - Always new trouble in execution
+
+    ---
+
+    ## Why Elixir?
+
+    - Great for dealing with inputs.
+    - Simple ways of dealing with state.
+    - Does not require a bunch of extra infrastructure
+    - LiveView made it incredible for building expressive outputs.
+    - Wiring inputs to outputs could not be easier.
+
+    Images: Elixir logo, Erlang logo, Phoenix logo
+
+    ---
+
+    ## Inputs & Outputs
+
+    - Projects I've done in recent years
+    - Calendar eInk screen
+    - Macro pad controlling lights
+    - Stream Deck control software
+    - Telegram bots
+    - Inputs / Sources
+    - APIs
+    - Calendar URLs
+    - Chat bots (Telegram/Slack)
+    - Hardware controls
+    - Webhooks
+    - Outputs / Sinks
+    - APIs
+    - Web pages (LiveView)
+    - Desktop apps (wx)
+    - Hardware (lights, displays)
+    - Chat bots (Telegram/Slack)
+
+    ---
+
+    ## Why Membrane?
+
+    - Provides new Inputs and Outputs with audio and video
+    - Traditionally difficult mediums to work with
+    - Performs operations in Elixir, minimize shelling out
+    - ffmpeg is rough to integrate with
+    - Makes the results practical to use in Elixir
+    - Make the actual process accessible in Elixir
+    - More information than you might think
+
+    Images: Membrane logo
+
+    ---
+
+    ## Transformations
+
+    - Taking text from one place and putting it in another place is easy enough
+    - Libraries like Image make manipulating pictures very powerful
+    - Membrane enables transformations for audio and video.
+
+    ---
+
+    ## ML transforming unlikely formats
+
+    - Not a big ML enthusiast but see some utility there
+    - Allows transforming between messy formats
+    - Text to image, weirdly through diffusion
+    - Image to text, OCR quite well, object classification quite poorly
+    - Audio to text, transcription
+    - Text to audio, voice synthesis
+    - Bumblebee makes this a tool box for builders like me
+
+    ---
+
+    ## Managing complexity
+
+    - No extra infrastructure, all in a BEAM application
+    - Media handling well abstracted
+    - Machine learning well abstracted
+    - Live web UI also well abstracted
+    - Communication and coordination, thoroughly available
+    - The most complicated code is the math to calculate duration from bitrate
+    - Oh, and the SVG for the waveform was confusing
+
+    ---
+
+    ## What is this presentation doing?
+
+    - Measure audio levels to produce a waveform using Membrane
+    - Low-latency poor-quality, near-instant transcription
+    - Slower better transcription using a longer section of speech
+    - Interpreting transcript to of
+
+    ---
 
     </textarea>
           </section>
@@ -290,7 +426,7 @@ defmodule LivelyWeb.MediaLive do
         xmlns="http://www.w3.org/2000/svg"
         fill="none"
         viewBox="0 0 1600 900"
-        stroke-width="4"
+        stroke-width="6"
         stroke="currentColor"
         class="absolute top-0 left-0 stroke-white opacity-25"
         preserveAspectRatio="xMidYMin slice"

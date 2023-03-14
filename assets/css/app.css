@@ -11,6 +11,15 @@
         font-display: swap;
     }
 
+    .reveal {
+        text-align: left !important;
+    }
+
+    .reveal .slides {
+        text-align: left !important;
+    }
+
+
     .slides h2 {
         background-color: #7552ec;
         color: white;
