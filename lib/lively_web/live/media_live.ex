@@ -6,7 +6,10 @@ defmodule LivelyWeb.MediaLive do
 
   def mount(_session, _params, socket) do
     Phoenix.PubSub.subscribe(Lively.PubSub, "transcripts")
-    socket = assign(socket, pipeline: nil, transcripts: [], levels: %{}, slide: 1)
+
+    socket =
+      assign(socket, pipeline: nil, transcripts: [], levels: %{}, slide: 1, level_flip?: true)
+
     # DEV mode
     if connected?(socket) do
       socket =
@@ -101,6 +104,7 @@ defmodule LivelyWeb.MediaLive do
     first = hd(amps)
     amps = Map.get(socket.assigns.levels, current_index, [])
     socket = assign(socket, levels: Map.put(socket.assigns.levels, current_index, [first | amps]))
+
     {:noreply, socket}
   end
 
@@ -205,6 +209,7 @@ defmodule LivelyWeb.MediaLive do
   @height 600
   @width 1600
   @use_samples 300
+  @floor -60
   defp levels_to_draw_commands(levels) do
     amount = Enum.count(levels)
 
@@ -213,15 +218,14 @@ defmodule LivelyWeb.MediaLive do
       |> Enum.flat_map(fn index ->
         Map.get(levels, index, [])
       end)
-      |> Enum.concat(for _ <- 1..@use_samples, do: 0)
+      |> Enum.concat(for _ <- 1..@use_samples, do: @floor)
       |> Enum.take(@use_samples)
       |> Enum.reverse()
-      |> Enum.take_every(2)
 
     samples = Enum.count(level)
 
     if samples > 0 do
-      point = @width / samples
+      point = @width / samples * 2
 
       first =
         case level do
@@ -238,6 +242,11 @@ defmodule LivelyWeb.MediaLive do
         |> Enum.with_index()
         |> Enum.map(fn {amp, i} ->
           a = amp_to_one(amp)
+
+          if rem(i, 50) == 0 do
+            IO.inspect({amp, a, a * @height, r(a * @height), r(@height - a * @height)})
+          end
+
           # IO.inspect({a, a * @height, @height - a * @height})
           "M#{r(point * i)} #{r(a * @height)}V#{r(@height - a * @height)}"
         end)
@@ -291,8 +300,10 @@ defmodule LivelyWeb.MediaLive do
     end
   end
 
-  defp amp_to_one(minus_hundred) do
-    (abs(minus_hundred) + 50) / 100
+  defp amp_to_one(amp) do
+    positive = amp - @floor
+    zero_to_one = positive / abs(@floor)
+    min(max(zero_to_one, 0.0), 1.0)
   end
 
   defp r(float) do
