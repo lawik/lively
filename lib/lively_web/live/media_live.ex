@@ -185,14 +185,14 @@ defmodule LivelyWeb.MediaLive do
 
     socket =
       if String.contains?(lower, "slide forward") do
-        push_event(socket, "next-slide", {})
+        push_event(socket, "next-slide", %{})
       else
         socket
       end
 
     socket =
       if String.contains?(lower, "slide back") do
-        push_event(socket, "previous-slide", {})
+        push_event(socket, "previous-slide", %{})
       else
         socket
       end
@@ -292,9 +292,12 @@ defmodule LivelyWeb.MediaLive do
           a = amp_to_one(amp)
 
           # IO.inspect({a, a * @height, @height - a * @height})
-          "M#{r(point * i)} #{r(a * @height)}V#{r(@height - a * @height)}"
+          "M#{r(point * i)} #{r(@height - a * @height)}V#{r(a * @height)}"
         end)
         |> Enum.join("")
+        |> IO.inspect()
+
+      IO.puts("")
 
       first <> cmds
     else
@@ -310,7 +313,7 @@ defmodule LivelyWeb.MediaLive do
       |> Enum.flat_map(fn index ->
         Map.get(levels, index, [])
       end)
-      |> Enum.concat(for _ <- 1..@use_samples, do: 50)
+      |> Enum.concat(for _ <- 1..@use_samples, do: @floor)
       |> Enum.take(@use_samples)
       |> Enum.reverse()
 
@@ -334,7 +337,8 @@ defmodule LivelyWeb.MediaLive do
         |> Enum.with_index()
         |> Enum.map(fn {amp, i} ->
           a = amp_to_one(amp)
-          "L#{r(point * i)} #{r(a * @height)}"
+          # IO.inspect(a * @height)
+          "L#{r(point * i)} #{r(@height - a * @height)}"
         end)
         |> Enum.join("")
 
@@ -356,15 +360,7 @@ defmodule LivelyWeb.MediaLive do
 
   def render(assigns) do
     ~H"""
-    <!-- Video as background -->
-    <div class="absolute top-0 left-0 w-screen h-screen overflow-hidden">
-      <video
-        class="absolute top-0 left-0 w-screen h-screen object-cover"
-        id="video-preview"
-        phx-hook="video"
-        autoplay
-      >
-      </video>
+    <div class="absolute top-0 left-0 w-screen h-screen z-index-50">
       <div class="reveal" style="width: 50vw;">
         <div class="slides">
           <section data-markdown>
@@ -477,6 +473,16 @@ defmodule LivelyWeb.MediaLive do
           </section>
         </div>
       </div>
+    </div>
+    <!-- Video as background -->
+    <div class="absolute top-0 left-0 w-screen h-screen overflow-hidden z-index-10">
+      <video
+        class="absolute top-0 left-0 w-screen h-screen object-cover"
+        id="video-preview"
+        phx-hook="video"
+        autoplay
+      >
+      </video>
       <svg
         xmlns="http://www.w3.org/2000/svg"
         fill="none"
@@ -509,9 +515,9 @@ defmodule LivelyWeb.MediaLive do
         -->
       </form>
     </div>
-    <div class="absolute min-w-full min-h-[48px] bottom-0 right-0 text-right overflow-hidden flex flex-nowrap bg-black text-white opacity-70 justify-end">
+    <div class="absolute min-w-full min-h-[48px] bottom-0 right-0 text-right overflow-hidden flex flex-nowrap bg-black text-white opacity-70 justify-end z-index-60">
       <span
-        :for={{{start, _stop, text}, index} <- @transcripts |> Enum.with_index() |> Enum.take(-50)}
+        :for={{{start, _stop, text}, _index} <- @transcripts |> Enum.with_index() |> Enum.take(-50)}
         class="inline-block mr-1 whitespace-nowrap"
       >
         <%= if not is_nil(text) do %>
