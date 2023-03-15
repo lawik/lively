@@ -258,6 +258,7 @@ defmodule LivelyWeb.MediaLive do
   @width 1600
   @use_samples 300
   @floor -60
+  @padding 150
   defp levels_to_draw_commands(levels) do
     amount = Enum.count(levels)
 
@@ -275,31 +276,24 @@ defmodule LivelyWeb.MediaLive do
     if samples > 0 do
       point = @width / samples * 2
 
-      first =
-        case level do
-          [h | _] ->
-            a = amp_to_one(h)
-            "M0 #{r(a * @height)}"
-
-          [] ->
-            ""
-        end
-
       cmds =
         level
         |> Enum.with_index()
         |> Enum.map(fn {amp, i} ->
           a = amp_to_one(amp)
 
-          # IO.inspect({a, a * @height, @height - a * @height})
-          "M#{r(point * i)} #{r(@height - a * @height)}V#{r(a * @height)}"
+          top_y = @padding + @height / 2 - @height / 2 * a
+          size = @height * a
+
+          IO.inspect({a, a * @height, @height - a * @height})
+          "M#{r(point * i)} #{r(top_y)}v#{r(size)}"
         end)
         |> Enum.join("")
         |> IO.inspect()
 
       IO.puts("")
 
-      first <> cmds
+      cmds
     else
       ""
     end
@@ -529,16 +523,13 @@ defmodule LivelyWeb.MediaLive do
           </div>
         <% end %>
       </span>
-      <span
-        :for={text <- Enum.reverse(@instants)}
-        class="inline-block mr-1 whitespace-nowrap"
-      >
-          <div class="flex text-xs text-gray-400 gap-4">
-            <span>&nbsp;</span>
-          </div>
-          <div>
-            <%= text %>
-          </div>
+      <span :for={text <- Enum.reverse(@instants)} class="inline-block mr-1 whitespace-nowrap">
+        <div class="flex text-xs text-gray-400 gap-4">
+          <span>&nbsp;</span>
+        </div>
+        <div>
+          <%= text %>
+        </div>
       </span>
     </div>
     """
