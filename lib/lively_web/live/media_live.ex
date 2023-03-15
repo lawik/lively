@@ -30,6 +30,7 @@ defmodule LivelyWeb.MediaLive do
           assign(socket,
             pipeline: :fake,
             transcripts: [{0, 5000, "This is great"}, {5001, 10000, "So good."}],
+            instants: ["Love it.", "Lovely."],
             levels: levels
           )
         else
@@ -374,6 +375,12 @@ defmodule LivelyWeb.MediaLive do
 
     ---
 
+    ## A theory of cool
+
+    - Take input, transform it, produce interesting output
+    - Strive for something novel
+    - CRUD ain't it, chief
+
     ## Why Elixir?
 
     - Great for dealing with inputs.
@@ -388,23 +395,18 @@ defmodule LivelyWeb.MediaLive do
 
     ## Inputs & Outputs
 
-    - Projects I've done in recent years
-    - Calendar eInk screen
-    - Macro pad controlling lights
-    - Stream Deck control software
-    - Telegram bots
     - Inputs / Sources
-    - APIs
-    - Calendar URLs
-    - Chat bots (Telegram/Slack)
-    - Hardware controls
-    - Webhooks
+      - APIs
+      - Calendar URLs
+      - Chat bots (Telegram/Slack)
+      - Hardware controls
+      - Webhooks
     - Outputs / Sinks
-    - APIs
-    - Web pages (LiveView)
-    - Desktop apps (wx)
-    - Hardware (lights, displays)
-    - Chat bots (Telegram/Slack)
+      - APIs
+      - Web pages (LiveView)
+      - Desktop apps (wx)
+      - Hardware (lights, displays)
+      - Chat bots (Telegram/Slack)
 
     ---
 
@@ -511,8 +513,9 @@ defmodule LivelyWeb.MediaLive do
     </div>
     <div class="absolute min-w-full min-h-[48px] bottom-0 right-0 text-right overflow-hidden flex flex-nowrap bg-black text-white opacity-70 justify-end z-index-60">
       <span
-        :for={{{start, _stop, text}, _index} <- @transcripts |> Enum.with_index() |> Enum.take(-50)}
+        :for={{{start, _stop, text}, index} <- @transcripts |> Enum.with_index() |> Enum.take(-50)}
         class="inline-block mr-1 whitespace-nowrap"
+        id={"transcription-#{index}"}
       >
         <%= if not is_nil(text) do %>
           <div class="flex text-xs text-gray-400 gap-4">
@@ -523,7 +526,11 @@ defmodule LivelyWeb.MediaLive do
           </div>
         <% end %>
       </span>
-      <span :for={text <- Enum.reverse(@instants)} class="inline-block mr-1 whitespace-nowrap">
+      <span
+        :for={{text, i} <- @instants |> Enum.with_index() |> Enum.reverse()}
+        class="inline-block mr-1 whitespace-nowrap animate-pulse"
+        id={"instant-#{i}"}
+      >
         <div class="flex text-xs text-gray-400 gap-4">
           <span>&nbsp;</span>
         </div>
