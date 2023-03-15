@@ -213,7 +213,7 @@ defmodule LivelyWeb.MediaLive do
       |> Enum.flat_map(fn index ->
         Map.get(levels, index, [])
       end)
-      |> Enum.concat(for _ <- 1..@use_samples, do: 50)
+      |> Enum.concat(for _ <- 1..@use_samples, do: 0)
       |> Enum.take(@use_samples)
       |> Enum.reverse()
       |> Enum.take_every(2)
