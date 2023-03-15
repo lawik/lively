@@ -8,7 +8,14 @@ defmodule LivelyWeb.MediaLive do
     Phoenix.PubSub.subscribe(Lively.PubSub, "transcripts")
 
     socket =
-      assign(socket, pipeline: nil, transcripts: [], levels: %{}, slide: 1, level_flip?: true)
+      assign(socket,
+        pipeline: nil,
+        transcripts: [],
+        instants: [],
+        levels: %{},
+        slide: 1,
+        level_flip?: true
+      )
 
     # DEV mode
     if connected?(socket) do
@@ -37,8 +44,8 @@ defmodule LivelyWeb.MediaLive do
     end
   end
 
-  @keyboard "⌨️"
-  @silence "😶"
+  #  @keyboard "⌨️"
+  #  @silence "😶"
   @simple_mappings %{
     # "[ Silence ]" => {:safe, @silence},
     # "[ typing ]" => {:safe, @keyboard},
@@ -96,7 +103,48 @@ defmodule LivelyWeb.MediaLive do
         end)
       end
 
-    {:noreply, assign(socket, transcripts: transcripts)}
+    {:noreply, assign(socket, transcripts: transcripts, instants: [])}
+  end
+
+  def handle_info({:instant, text, part, _start, _stop}, socket) do
+    socket =
+      if part == :final and text == "[BLANK_AUDIO]" do
+        socket
+      else
+        t = text
+
+        text =
+          if is_binary(t) do
+            t = String.trim(t)
+
+            if t in Map.keys(@simple_mappings) do
+              @simple_mappings[t]
+            else
+              if String.starts_with?(t, "[") and String.ends_with?(t, "]") do
+                {:safe,
+                 t
+                 |> String.replace("[", "<span class=\"text-purple-800\">")
+                 |> String.replace("]", "</span>")}
+              else
+                if String.starts_with?(t, "(") and String.ends_with?(t, ")") do
+                  {:safe,
+                   t
+                   |> String.replace("(", "<span class=\"text-blue-800\">")
+                   |> String.replace(")", "</span>")}
+                else
+                  t
+                end
+              end
+            end
+          else
+            t
+          end
+
+        instants = [text | socket.assigns.instants]
+        assign(socket, instants: instants)
+      end
+
+    {:noreply, socket}
   end
 
   def handle_info({:levels, amps}, socket) do
@@ -242,10 +290,6 @@ defmodule LivelyWeb.MediaLive do
         |> Enum.with_index()
         |> Enum.map(fn {amp, i} ->
           a = amp_to_one(amp)
-
-          if rem(i, 50) == 0 do
-            IO.inspect({amp, a, a * @height, r(a * @height), r(@height - a * @height)})
-          end
 
           # IO.inspect({a, a * @height, @height - a * @height})
           "M#{r(point * i)} #{r(a * @height)}V#{r(@height - a * @height)}"
@@ -467,7 +511,7 @@ defmodule LivelyWeb.MediaLive do
     </div>
     <div class="absolute min-w-full min-h-[48px] bottom-0 right-0 text-right overflow-hidden flex flex-nowrap bg-black text-white opacity-70 justify-end">
       <span
-        :for={{{start, stop, text}, index} <- @transcripts |> Enum.with_index() |> Enum.take(-50)}
+        :for={{{start, _stop, text}, index} <- @transcripts |> Enum.with_index() |> Enum.take(-50)}
         class="inline-block mr-1 whitespace-nowrap"
       >
         <%= if not is_nil(text) do %>
@@ -478,6 +522,17 @@ defmodule LivelyWeb.MediaLive do
             <%= text %>
           </div>
         <% end %>
+      </span>
+      <span
+        :for={text <- Enum.reverse(@instants)}
+        class="inline-block mr-1 whitespace-nowrap"
+      >
+          <div class="flex text-xs text-gray-400 gap-4">
+            <span>&nbsp;</span>
+          </div>
+          <div>
+            <%= text %>
+          </div>
       </span>
     </div>
     """
