@@ -373,6 +373,10 @@ defmodule LivelyWeb.MediaLive do
             <textarea data-template>
     ## Lively Membranes
 
+    <img src="/underjord.svg">
+
+    Mostly functional programming.
+
 
     ---
 
@@ -402,7 +406,11 @@ defmodule LivelyWeb.MediaLive do
     - LiveView made it incredible for building expressive outputs.
     - Wiring inputs to outputs could not be easier.
 
-    Images: Elixir logo, Erlang logo, Phoenix logo
+    <div class="flex gap-4">
+    <div><img src="/elixir.png" class="bg-white p-4 rounded-md w-[200px]" /></div>
+    <div><img src="/erlang.svg" class="bg-white p-4 rounded-md w-[200px]" /></div>
+    <div><img src="/phoenix.png" class="p-4" /></div>
+    </div>
 
     ---
 
@@ -433,7 +441,7 @@ defmodule LivelyWeb.MediaLive do
     - Make the actual process accessible in Elixir
     - More information than you might think
 
-    Images: Membrane logo
+    <div><img src="/membrane.svg" class="bg-white p-4 rounded-md w-[600px]" /></div>
 
     ---
 
@@ -476,6 +484,18 @@ defmodule LivelyWeb.MediaLive do
     - Slower better transcription using a longer section of speech
     - Interpreting transcript to offer voice commands
     - Everything is messages to a LiveView
+
+    ---
+
+    ## Questions?
+
+    - Any questions about how this works is welcome.
+    - Suggestions on what you'd like to see as I grow the talk, also welcome :)
+    - Follow my stuff on underjord.io (newsletter, blog, YouTube, Mastodon, podcasts)
+
+    <img src="/underjord.svg">
+
+    Mostly functional programming.
 
     ---
 

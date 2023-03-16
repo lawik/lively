@@ -58,9 +58,6 @@ defmodule Lively.Media.Pipeline do
           buffer_duration: buffer_duration,
           fancy?: true
         },
-        # better_transcription: %MembraneTranscription.Element{
-        #   buffer_duration: 10
-        # },
         fake_out: Membrane.Fake.Sink.Buffers
       }
       |> Map.merge(source_children)
@@ -72,7 +69,6 @@ defmodule Lively.Media.Pipeline do
       |> to(:levels)
       |> to(:instant_transcription)
       |> to(:transcription)
-      # |> to(:better_transcription)
       |> to(:fake_out)
     ]
 
