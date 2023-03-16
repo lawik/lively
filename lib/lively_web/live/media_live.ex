@@ -14,6 +14,7 @@ defmodule LivelyWeb.MediaLive do
         instants: [],
         levels: %{},
         slide: 1,
+        time: time(),
         level_flip?: true
       )
 
@@ -44,6 +45,8 @@ defmodule LivelyWeb.MediaLive do
       {:ok, socket}
     end
   end
+
+  defp time, do: :erlang.system_time(:millisecond)
 
   #  @keyboard "⌨️"
   #  @silence "😶"
@@ -152,6 +155,7 @@ defmodule LivelyWeb.MediaLive do
     current_index = Enum.count(socket.assigns.transcripts)
     first = hd(amps)
     amps = Map.get(socket.assigns.levels, current_index, [])
+    # IO.inspect(Enum.count(amps), label: "levels for #{current_index}")
     socket = assign(socket, levels: Map.put(socket.assigns.levels, current_index, [first | amps]))
 
     {:noreply, socket}
@@ -258,6 +262,7 @@ defmodule LivelyWeb.MediaLive do
   @height 600
   @width 1600
   @use_samples 300
+  # @use_samples 100
   @floor -60
   @padding 150
   defp levels_to_draw_commands(levels) do
@@ -275,7 +280,7 @@ defmodule LivelyWeb.MediaLive do
     samples = Enum.count(level)
 
     if samples > 0 do
-      point = @width / samples * 2
+      point = @width / 2 / @use_samples
 
       cmds =
         level
@@ -286,13 +291,14 @@ defmodule LivelyWeb.MediaLive do
           top_y = @padding + @height / 2 - @height / 2 * a
           size = @height * a
 
-          IO.inspect({a, a * @height, @height - a * @height})
-          "M#{r(point * i)} #{r(top_y)}v#{r(size)}"
+          # IO.inspect({a, a * @height, @height - a * @height})
+          "M#{r(point * i * 2)} #{r(top_y)}v#{r(size)}"
         end)
         |> Enum.join("")
-        |> IO.inspect()
 
-      IO.puts("")
+      # |> IO.inspect()
+
+      # IO.puts("")
 
       cmds
     else
@@ -483,10 +489,10 @@ defmodule LivelyWeb.MediaLive do
         xmlns="http://www.w3.org/2000/svg"
         fill="none"
         viewBox="0 0 1600 900"
-        stroke-width="6"
+        stroke-width="3"
         stroke="currentColor"
-        class="absolute top-0 left-0 stroke-white opacity-25"
-        preserveAspectRatio="xMidYMin slice"
+        class="absolute top-0 right-0 stroke-white opacity-25 overflow-hidden"
+        preserveAspectRatio="xMinYMin slice"
       >
         <path stroke-linecap="round" stroke-linejoin="round" d={levels_to_draw_commands(@levels)} />
       </svg>
