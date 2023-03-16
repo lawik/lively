@@ -206,6 +206,7 @@ defmodule LivelyWeb.MediaLive do
   end
 
   @num_names %{
+    "zero" => 0,
     "one" => 1,
     "two" => 2,
     "three" => 3,
@@ -366,7 +367,7 @@ defmodule LivelyWeb.MediaLive do
   def render(assigns) do
     ~H"""
     <div class="absolute top-0 left-0 w-screen h-screen z-index-50" id="reveal-holder" phx-update="ignore">
-      <div class="reveal" style="width: 50vw;">
+      <div class="reveal" style="width: 100vw;">
         <div class="slides">
           <section data-markdown>
             <textarea data-template>
@@ -473,7 +474,8 @@ defmodule LivelyWeb.MediaLive do
     - Measure audio levels to produce a waveform using Membrane
     - Low-latency poor-quality, near-instant transcription
     - Slower better transcription using a longer section of speech
-    - Interpreting transcript to of
+    - Interpreting transcript to offer voice commands
+    - Everything is messages to a LiveView
 
     ---
 
@@ -483,7 +485,7 @@ defmodule LivelyWeb.MediaLive do
       </div>
     </div>
     <!-- Video as background -->
-    <div class="absolute top-0 left-0 w-screen h-screen overflow-hidden z-index-10">
+    <div class="absolute top-0 left-0 w-screen h-screen overflow-hidden z-index-10 bg-black">
       <video
         class="absolute top-0 left-0 w-screen h-screen object-cover"
         id="video-preview"
@@ -539,7 +541,7 @@ defmodule LivelyWeb.MediaLive do
         <% end %>
       </span>
       <span
-        :for={{text, i} <- @instants |> Enum.with_index() |> Enum.reverse()}
+        :for={{text, i} <- @instants |> Enum.reject(&is_nil/1) |> Enum.with_index() |> Enum.reverse()}
         class="inline-block mr-1 whitespace-nowrap animate-pulse"
         id={"instant-#{i}"}
       >

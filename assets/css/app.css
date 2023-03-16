@@ -3,6 +3,10 @@
 @import "tailwindcss/utilities";
 
 @layer base {
+    body::-webkit-scrollbar {
+        display: none;
+    }
+
     @font-face {
         font-family: 'Space Grotesk';
         src: url('/reveal/space-grotesk-semibold.woff2') format('woff2');

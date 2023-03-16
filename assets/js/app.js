@@ -47,22 +47,23 @@ let hooks = {
             this.handleEvent("previous-slide", () => {
                 Reveal.left()
             })
-
-            // Not showing vendor prefixes.
-            navigator.getUserMedia({ video: true, audio: false }, function (localMediaStream) {
-                console.log(localMediaStream)
-                //video.src = window.URL.createObjectURL(localMediaStream);
-                video.srcObject = localMediaStream;
-                console.log("set up")
-
-                // Note: onloadedmetadata doesn't fire in Chrome when using it with getUserMedia.
-                // See crbug.com/110938.
-                video.onloadedmetadata = function (e) {
-                    console.log("onloadedmetadata");
-                    // Ready to go. Do some stuff.
-                };
-            }, errorCallback);
-
+            /*
+                        // Not showing vendor prefixes.
+                        navigator.getUserMedia({ video: true, audio: false }, function (localMediaStream) {
+                            console.log(localMediaStream)
+                            //video.src = window.URL.createObjectURL(localMediaStream);
+                            video.srcObject = localMediaStream;
+                            console.log("set up")
+            
+                            // Note: onloadedmetadata doesn't fire in Chrome when using it with getUserMedia.
+                            // See crbug.com/110938.
+                            video.onloadedmetadata = function (e) {
+                                console.log("onloadedmetadata");
+                                // Ready to go. Do some stuff.
+                            };
+                        }, errorCallback);
+            
+            */
             // More info about initialization & config:
             // - https://revealjs.com/initialization/
             // - https://revealjs.com/config/

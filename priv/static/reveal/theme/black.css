@@ -83,6 +83,7 @@ section.has-light-background h6 {
 .reveal h4,
 .reveal h5,
 .reveal h6 {
+  display: inline-block;
   margin: var(--r-heading-margin);
   color: var(--r-heading-color);
   font-family: var(--r-heading-font);
@@ -155,6 +156,7 @@ section.has-light-background h6 {
   display: inline-block;
   text-align: left;
   margin: 0 0 0 1em;
+  width: 100%;
 }
 
 .reveal ol {
