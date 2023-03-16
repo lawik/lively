@@ -261,7 +261,7 @@ defmodule LivelyWeb.MediaLive do
 
   @height 600
   @width 1600
-  @use_samples 300
+  @use_samples 150
   # @use_samples 100
   @floor -60
   @padding 150
@@ -350,9 +350,13 @@ defmodule LivelyWeb.MediaLive do
   end
 
   defp amp_to_one(amp) do
-    positive = amp - @floor
-    zero_to_one = positive / abs(@floor)
-    min(max(zero_to_one, 0.0), 1.0)
+    if is_number(amp) do
+      positive = amp - @floor
+      zero_to_one = positive / abs(@floor)
+      min(max(zero_to_one, 0.0), 1.0)
+    else
+      0.0
+    end
   end
 
   defp r(float) do
@@ -361,7 +365,7 @@ defmodule LivelyWeb.MediaLive do
 
   def render(assigns) do
     ~H"""
-    <div class="absolute top-0 left-0 w-screen h-screen z-index-50">
+    <div class="absolute top-0 left-0 w-screen h-screen z-index-50" id="reveal-holder" phx-update="ignore">
       <div class="reveal" style="width: 50vw;">
         <div class="slides">
           <section data-markdown>
@@ -386,6 +390,8 @@ defmodule LivelyWeb.MediaLive do
     - Take input, transform it, produce interesting output
     - Strive for something novel
     - CRUD ain't it, chief
+
+    ---
 
     ## Why Elixir?
 
@@ -489,9 +495,9 @@ defmodule LivelyWeb.MediaLive do
         xmlns="http://www.w3.org/2000/svg"
         fill="none"
         viewBox="0 0 1600 900"
-        stroke-width="3"
+        stroke-width="7"
         stroke="currentColor"
-        class="absolute top-0 right-0 stroke-white opacity-25 overflow-hidden"
+        class="absolute top-0 right-0 stroke-white opacity-[0.15] overflow-hidden"
         preserveAspectRatio="xMinYMin slice"
       >
         <path stroke-linecap="round" stroke-linejoin="round" d={levels_to_draw_commands(@levels)} />
