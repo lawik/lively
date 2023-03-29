@@ -189,15 +189,32 @@ defmodule LivelyWeb.MediaLive do
       end
 
     socket =
-      if String.contains?(lower, "slide forward") do
+      if String.contains?(lower, "slide forward") or String.contains?(lower, "next slide") or
+           String.contains?(lower, "onward") do
         push_event(socket, "next-slide", %{})
       else
         socket
       end
 
     socket =
-      if String.contains?(lower, "slide back") do
+      if String.contains?(lower, "slide back") or String.contains?(lower, "previous slide") do
         push_event(socket, "previous-slide", %{})
+      else
+        socket
+      end
+
+    socket =
+      if String.contains?(lower, "clear screen") do
+        assign(socket, transcripts: [], instants: [], levels: %{})
+      else
+        socket
+      end
+
+    socket =
+      if String.contains?(lower, "full reset") do
+        socket
+        |> push_event("go-to-slide", %{slide: 0})
+        |> assign(transcripts: [], instants: [], levels: %{})
       else
         socket
       end
@@ -545,10 +562,10 @@ defmodule LivelyWeb.MediaLive do
         -->
       </form>
     </div>
-    <div class="absolute min-w-full min-h-[48px] bottom-0 right-0 text-right overflow-hidden flex flex-nowrap bg-black text-white opacity-70 justify-end z-index-60">
+    <div class="absolute min-w-full min-h-[48px] bottom-0 right-0 text-right overflow-hidden flex flex-nowrap bg-black text-white opacity-70 justify-end z-index-60 text-5xl mb-4">
       <span
         :for={{{start, _stop, text}, index} <- @transcripts |> Enum.with_index() |> Enum.take(-50)}
-        class="inline-block mr-1 whitespace-nowrap"
+        class="inline-block mr-2 whitespace-nowrap"
         id={"transcription-#{index}"}
       >
         <%= if not is_nil(text) do %>

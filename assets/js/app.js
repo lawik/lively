@@ -69,7 +69,7 @@ let hooks = {
             // - https://revealjs.com/config/
             Reveal.initialize({
                 hash: true,
-                center: false,
+                center: true,
                 embedded: true,
                 controls: false,
                 progress: false,
