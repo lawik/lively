@@ -36,7 +36,7 @@ defmodule LivelyWeb.MediaLive do
             levels: levels
           )
         else
-          {:noreply, socket} = play_pause("5", "mic", socket)
+          # {:noreply, socket} = play_pause("5", "mic", socket)
           # {:noreply, socket} = play_pause("5", "file", socket)
           socket
         end
@@ -69,8 +69,13 @@ defmodule LivelyWeb.MediaLive do
   end
 
   @impl true
-  def handle_event(other, socket) do
-    IO.inspect(other)
+  def handle_event("run", _, socket) do
+    play_pause("5", "mic", socket)
+  end
+
+  @impl true
+  def handle_event(other, params, socket) do
+    IO.inspect({other, params}, label: "event")
     {:noreply, socket}
   end
 
@@ -313,7 +318,11 @@ defmodule LivelyWeb.MediaLive do
         level
         |> Enum.with_index()
         |> Enum.map(fn {amp, i} ->
-          a = amp_to_one(amp)
+          a =
+            case amp do
+              :clip -> 1.0
+              _ -> amp_to_one(amp)
+            end
 
           top_y = @padding + @height / 2 - @height / 2 * a
           size = @height * a
@@ -393,7 +402,11 @@ defmodule LivelyWeb.MediaLive do
   @impl true
   def render(assigns) do
     ~H"""
-    <div class="absolute top-0 left-0 w-screen h-screen z-index-50" id="reveal-holder" phx-update="ignore">
+    <div
+      class="absolute top-0 left-0 w-screen h-screen z-index-50"
+      id="reveal-holder"
+      phx-update="ignore"
+    >
       <div class="reveal" style="width: 100vw;">
         <div class="slides">
           <section data-markdown>
