@@ -4,6 +4,7 @@ defmodule LivelyWeb.MediaLive do
   alias Lively.Media.Sample
   alias Lively.Media.Pipeline
 
+  @impl true
   def mount(_session, _params, socket) do
     Phoenix.PubSub.subscribe(Lively.PubSub, "transcripts")
 
@@ -59,10 +60,18 @@ defmodule LivelyWeb.MediaLive do
     "[BLANK_AUDIO]" => nil
   }
 
+  @impl true
   def handle_event("action", %{"buffer_duration" => d, "source" => s}, socket) do
     play_pause(d, s, socket)
   end
 
+  @impl true
+  def handle_event(other, socket) do
+    IO.inspect(other)
+    {:noreply, socket}
+  end
+
+  @impl true
   def handle_info({:transcribed, text, part, start, stop}, socket) do
     socket = handle_command(text, socket)
 
@@ -353,6 +362,7 @@ defmodule LivelyWeb.MediaLive do
     :erlang.float_to_binary(float, decimals: 2)
   end
 
+  @impl true
   def render(assigns) do
     ~H"""
     <div class="absolute top-0 left-0 w-screen h-screen z-index-50">

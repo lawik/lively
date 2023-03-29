@@ -63,6 +63,46 @@ let hooks = {
                 };
             }, errorCallback);
 
+            const bufferSize = 0; // auto
+            let rawStream;
+            let stream;
+            let audioContext;
+            let audioProcessor;
+            let buffer = new Float32Array();
+            let sum = 0;
+            let avg = 0;
+            let processing = false;
+
+            function process(event) {
+                const buf = event.inputBuffer.getChannelData(0);
+
+                if (!processing) {
+                    processing = true;
+                    requestAnimationFrame(function () {
+                        processing = false;
+                    });
+                }
+                ctx.pushEvent("microphone_input", [{ info: "foo" }, buf.buffer]);
+            }
+
+            function open() {
+                audioContext = new AudioContext({ sampleRate: 16000 });
+                navigator.mediaDevices.getUserMedia({
+                    audio: true,
+                    video: false,
+                }).then((rawStream) => {
+                    rawStream = rawStream;
+                    stream = audioContext.createMediaStreamSource(rawStream);
+
+                    audioProcessor = audioContext.createScriptProcessor(bufferSize, 1, 1);
+                    audioProcessor.onaudioprocess = process;
+                    stream.connect(audioProcessor);
+                    audioProcessor.connect(audioContext.destination);
+                });
+            }
+
+            open();
+
             // More info about initialization & config:
             // - https://revealjs.com/initialization/
             // - https://revealjs.com/config/

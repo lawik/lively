@@ -32,7 +32,11 @@ defmodule Lively.Media.Pipeline do
               link(:mic)
             end,
             %{
-              mic: %Membrane.PortAudio.Source{}
+              # mic: %Membrane.PortAudio.Source{}
+              mic: %Lively.Media.PubSubSource{
+                channel: "mic-input",
+                module: Lively.PubSub
+              }
             }
           }
       end
