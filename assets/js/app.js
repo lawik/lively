@@ -47,23 +47,62 @@ let hooks = {
             this.handleEvent("previous-slide", () => {
                 Reveal.left()
             })
-            /*
-                        // Not showing vendor prefixes.
-                        navigator.getUserMedia({ video: true, audio: false }, function (localMediaStream) {
-                            console.log(localMediaStream)
-                            //video.src = window.URL.createObjectURL(localMediaStream);
-                            video.srcObject = localMediaStream;
-                            console.log("set up")
-            
-                            // Note: onloadedmetadata doesn't fire in Chrome when using it with getUserMedia.
-                            // See crbug.com/110938.
-                            video.onloadedmetadata = function (e) {
-                                console.log("onloadedmetadata");
-                                // Ready to go. Do some stuff.
-                            };
-                        }, errorCallback);
-            
-            */
+
+            // Not showing vendor prefixes.
+            navigator.getUserMedia({ video: true, audio: false }, function (localMediaStream) {
+                console.log(localMediaStream)
+                //video.src = window.URL.createObjectURL(localMediaStream);
+                //video.srcObject = localMediaStream;
+                console.log("set up")
+
+                // Note: onloadedmetadata doesn't fire in Chrome when using it with getUserMedia.
+                // See crbug.com/110938.
+                video.onloadedmetadata = function (e) {
+                    console.log("onloadedmetadata");
+                    // Ready to go. Do some stuff.
+                };
+            }, errorCallback);
+
+            const bufferSize = 0; // auto
+            let rawStream;
+            let stream;
+            let audioContext;
+            let audioProcessor;
+            let buffer = new Float32Array();
+            let sum = 0;
+            let avg = 0;
+            let processing = false;
+
+            function process(event) {
+                const buf = event.inputBuffer.getChannelData(0);
+
+                if (!processing) {
+                    processing = true;
+                    requestAnimationFrame(function () {
+                        processing = false;
+                    });
+                }
+                ctx.pushEvent("microphone_input", [{ info: "foo" }, buf.buffer]);
+            }
+
+            function open() {
+                audioContext = new AudioContext({ sampleRate: 16000 });
+                navigator.mediaDevices.getUserMedia({
+                    audio: true,
+                    video: false,
+                }).then((rawStream) => {
+                    rawStream = rawStream;
+                    stream = audioContext.createMediaStreamSource(rawStream);
+
+                    audioProcessor = audioContext.createScriptProcessor(bufferSize, 1, 1);
+                    audioProcessor.onaudioprocess = process;
+                    stream.connect(audioProcessor);
+                    audioProcessor.connect(audioContext.destination);
+                });
+            }
+
+            open();
+
             // More info about initialization & config:
             // - https://revealjs.com/initialization/
             // - https://revealjs.com/config/
