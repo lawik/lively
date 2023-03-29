@@ -64,7 +64,7 @@ defmodule Lively.Media.PubSubSource do
   end
 
   @impl true
-  def handle_other({:payload, payload}, _ctx, state) do
+  def handle_other({:payload, _payload}, _ctx, state) do
     # buffers = [%Membrane.Buffer{payload: payload} | state.buffers]
 
     # buffers =

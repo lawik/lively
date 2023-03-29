@@ -298,7 +298,9 @@ defmodule LivelyWeb.MediaLive do
           a =
             case amp do
               :clip -> 1.0
-              _ -> amp_to_one(amp)
+              :infinity -> 1.0
+              num when is_number(num) -> amp_to_one(amp)
+              _ -> 0.0
             end
 
           top_y = @padding + @height / 2 - @height / 2 * a
