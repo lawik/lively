@@ -57,11 +57,13 @@ defmodule Lively.Media.Pipeline do
         },
         instant_transcription: %MembraneTranscription.Element{
           buffer_duration: 1,
-          fancy?: true
+          fancy?: true,
+          priority: :high
         },
         transcription: %MembraneTranscription.Element{
           buffer_duration: buffer_duration,
-          fancy?: true
+          fancy?: true,
+          priority: :normal
         },
         fake_out: Membrane.Fake.Sink.Buffers
       }
@@ -87,7 +89,6 @@ defmodule Lively.Media.Pipeline do
     :ok
   end
 
-  @spacing 100
   @impl true
   def handle_notification(
         {:transcribed, %{results: [%{text: text}]}, part, start, stop},
@@ -95,20 +96,11 @@ defmodule Lively.Media.Pipeline do
         _context,
         state
       ) do
-    now = System.monotonic_time(:millisecond)
-
-    state =
-      if now - state.since_level > @spacing do
-        Phoenix.PubSub.broadcast!(
-          Lively.PubSub,
-          "transcripts",
-          {:transcribed, text, part, start, stop}
-        )
-
-        %{state | since_level: now}
-      else
-        state
-      end
+    Phoenix.PubSub.broadcast!(
+      Lively.PubSub,
+      "transcripts",
+      {:transcribed, text, part, start, stop}
+    )
 
     {:ok, state}
   end
@@ -129,6 +121,7 @@ defmodule Lively.Media.Pipeline do
     {:ok, state}
   end
 
+  @spacing 50
   @impl true
   def handle_notification(
         {:amplitudes, amps},
@@ -136,11 +129,20 @@ defmodule Lively.Media.Pipeline do
         _context,
         state
       ) do
-    Phoenix.PubSub.broadcast!(
-      Lively.PubSub,
-      "transcripts",
-      {:levels, amps}
-    )
+    now = System.monotonic_time(:millisecond)
+
+    state =
+      if now - state.since_level > @spacing do
+        Phoenix.PubSub.broadcast!(
+          Lively.PubSub,
+          "transcripts",
+          {:levels, amps}
+        )
+
+        %{state | since_level: now}
+      else
+        state
+      end
 
     {:ok, state}
   end
