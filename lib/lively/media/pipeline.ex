@@ -19,10 +19,18 @@ defmodule Lively.Media.Pipeline do
             fn ->
               link(:file)
               |> to(:decoder)
+              |> to(:converter)
             end,
             %{
               file: %Membrane.File.Source{location: filepath},
-              decoder: Membrane.MP3.MAD.Decoder
+              decoder: Membrane.MP3.MAD.Decoder,
+              converter: %Membrane.FFmpeg.SWResample.Converter{
+                output_caps: %Membrane.RawAudio{
+                  sample_format: :f32le,
+                  sample_rate: @target_sample_rate,
+                  channels: 1
+                }
+              }
             }
           }
 
@@ -44,13 +52,6 @@ defmodule Lively.Media.Pipeline do
     children =
       %{
         levels: %Membrane.Audiometer.Peakmeter{},
-        converter: %Membrane.FFmpeg.SWResample.Converter{
-          output_caps: %Membrane.RawAudio{
-            sample_format: :f32le,
-            sample_rate: @target_sample_rate,
-            channels: 1
-          }
-        },
         timestamper: %MembraneTranscription.Timestamper{
           bytes_per_second: @byte_per_second
         },
@@ -71,7 +72,6 @@ defmodule Lively.Media.Pipeline do
 
     links = [
       init_link_fn.()
-      |> to(:converter)
       |> to(:timestamper)
       |> to(:levels)
       |> to(:instant_transcription)
@@ -83,7 +83,7 @@ defmodule Lively.Media.Pipeline do
     IO.puts("setup done")
 
     {{:ok, spec: %ParentSpec{children: children, links: links}, playback: :playing},
-     %{to_pid: to_pid}}
+     %{to_pid: to_pid, since_level: System.monotonic_time(:millisecond)}}
   end
 
   @impl true
@@ -91,6 +91,7 @@ defmodule Lively.Media.Pipeline do
     :ok
   end
 
+  @spacing 100
   @impl true
   def handle_notification(
         {:transcribed, %{results: [%{text: text}]}, part, start, stop},
@@ -98,11 +99,20 @@ defmodule Lively.Media.Pipeline do
         _context,
         state
       ) do
-    Phoenix.PubSub.broadcast!(
-      Lively.PubSub,
-      "transcripts",
-      {:transcribed, text, part, start, stop}
-    )
+    now = System.monotonic_time(:millisecond)
+
+    state =
+      if now - state.since_level > @spacing do
+        Phoenix.PubSub.broadcast!(
+          Lively.PubSub,
+          "transcripts",
+          {:transcribed, text, part, start, stop}
+        )
+
+        %{state | since_level: now}
+      else
+        state
+      end
 
     {:ok, state}
   end
@@ -141,8 +151,8 @@ defmodule Lively.Media.Pipeline do
 
   @impl true
   def handle_notification(notification, element, _context, state) do
-    IO.inspect(notification, label: "notification")
-    IO.inspect(element, label: "element")
+    # IO.inspect(notification, label: "notification")
+    # IO.inspect(element, label: "element")
     {:ok, state}
   end
 

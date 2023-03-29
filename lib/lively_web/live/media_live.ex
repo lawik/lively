@@ -35,7 +35,7 @@ defmodule LivelyWeb.MediaLive do
             levels: levels
           )
         else
-          {:noreply, socket} = play_pause("5", "mic", socket)
+          # {:noreply, socket} = play_pause("5", "mic", socket)
           # {:noreply, socket} = play_pause("5", "file", socket)
           socket
         end
@@ -66,8 +66,13 @@ defmodule LivelyWeb.MediaLive do
   end
 
   @impl true
-  def handle_event(other, socket) do
-    IO.inspect(other)
+  def handle_event("run", _, socket) do
+    play_pause("5", "mic", socket)
+  end
+
+  @impl true
+  def handle_event(other, params, socket) do
+    IO.inspect({other, params}, label: "event")
     {:noreply, socket}
   end
 
@@ -290,18 +295,23 @@ defmodule LivelyWeb.MediaLive do
         level
         |> Enum.with_index()
         |> Enum.map(fn {amp, i} ->
-          a = amp_to_one(amp)
+          a =
+            case amp do
+              :clip -> 1.0
+              _ -> amp_to_one(amp)
+            end
 
           top_y = @padding + @height / 2 - @height / 2 * a
           size = @height * a
 
-          IO.inspect({a, a * @height, @height - a * @height})
+          # IO.inspect({a, a * @height, @height - a * @height})
           "M#{r(point * i)} #{r(top_y)}v#{r(size)}"
         end)
         |> Enum.join("")
-        |> IO.inspect()
 
-      IO.puts("")
+      # |> IO.inspect()
+
+      # IO.puts("")
 
       cmds
     else

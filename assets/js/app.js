@@ -1,6 +1,6 @@
 // If you want to use Phoenix channels, run `mix help phx.gen.channel`
 // to get started and then uncomment the line below.
-// import "./user_socket.js"
+//import "./user_socket.js"
 
 // You can include dependencies in two ways.
 //
@@ -27,10 +27,59 @@ navigator.getUserMedia = navigator.getUserMedia ||
     navigator.mozGetUserMedia ||
     navigator.msGetUserMedia;
 
+const HEADER_LENGTH = 4;
+
+function encode(meta, buffer) {
+    const encoder = new TextEncoder();
+    const metaArray = encoder.encode(JSON.stringify(meta));
+
+    const raw = new ArrayBuffer(
+        HEADER_LENGTH + metaArray.byteLength + buffer.byteLength
+    );
+    const view = new DataView(raw);
+
+    view.setUint32(0, metaArray.byteLength);
+    new Uint8Array(raw, HEADER_LENGTH, metaArray.byteLength).set(metaArray);
+    new Uint8Array(raw, HEADER_LENGTH + metaArray.byteLength).set(
+        new Uint8Array(buffer)
+    );
+
+    return raw;
+}
+
+function transportEncode(payload) {
+    if (
+        Array.isArray(payload) &&
+        payload[1] &&
+        payload[1].constructor === ArrayBuffer
+    ) {
+        const [info, buffer] = payload;
+        return encode([meta, info], buffer);
+    } else {
+        return { root: [meta, payload] };
+    }
+}
+
+const bufferSize = 512; // auto
+let rawStream;
+let stream;
+let audioContext;
+let audioProcessor;
+let buffer = new Float32Array();
+let sum = 0;
+let avg = 0;
+let processing = false;
+let running = false;
+
 let hooks = {
     video: {
         mounted() {
+            let ctx = this;
             console.log("mounted")
+            let socket = new Socket("/socket");
+            socket.connect();
+            let channel = socket.channel("audio:lobby", {});
+
             let video = this.el;
             var errorCallback = function (e) {
                 console.log('Reeeejected!', e);
@@ -63,45 +112,38 @@ let hooks = {
                 };
             }, errorCallback);
 
-            const bufferSize = 0; // auto
-            let rawStream;
-            let stream;
-            let audioContext;
-            let audioProcessor;
-            let buffer = new Float32Array();
-            let sum = 0;
-            let avg = 0;
-            let processing = false;
-
-            function process(event) {
-                const buf = event.inputBuffer.getChannelData(0);
-
-                if (!processing) {
-                    processing = true;
-                    requestAnimationFrame(function () {
-                        processing = false;
-                    });
-                }
-                ctx.pushEvent("microphone_input", [{ info: "foo" }, buf.buffer]);
-            }
-
             function open() {
-                audioContext = new AudioContext({ sampleRate: 16000 });
-                navigator.mediaDevices.getUserMedia({
-                    audio: true,
-                    video: false,
-                }).then((rawStream) => {
-                    rawStream = rawStream;
-                    stream = audioContext.createMediaStreamSource(rawStream);
+                window.removeEventListener("click", open);
+                channel.join()
+                    .receive("ok", resp => {
 
-                    audioProcessor = audioContext.createScriptProcessor(bufferSize, 1, 1);
-                    audioProcessor.onaudioprocess = process;
-                    stream.connect(audioProcessor);
-                    audioProcessor.connect(audioContext.destination);
-                });
+                        console.log(resp);
+                        // Defaults to f32le
+                        audioContext = new AudioContext({ sampleRate: 16000 });
+                        navigator.mediaDevices.getUserMedia({
+                            audio: true,
+                            video: false,
+                        }).then((rawStream) => {
+                            rawStream = rawStream;
+                            stream = audioContext.createMediaStreamSource(rawStream);
+
+                            audioProcessor = audioContext.createScriptProcessor(bufferSize, 1, 1);
+                            audioProcessor.onaudioprocess = function (event) {
+                                const buf = event.inputBuffer.getChannelData(0);
+                                channel.push("microphone_input", buf.buffer);
+                                if (!running) {
+                                    ctx.pushEvent("run", {});
+                                    running = true;
+                                }
+                            };
+                            stream.connect(audioProcessor);
+                            audioProcessor.connect(audioContext.destination);
+                        });
+                    })
+                    .receive("error", err => console.log("joining failed", err))
             }
 
-            open();
+            window.addEventListener("click", open);
 
             // More info about initialization & config:
             // - https://revealjs.com/initialization/
