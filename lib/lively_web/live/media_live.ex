@@ -79,6 +79,27 @@ defmodule LivelyWeb.MediaLive do
     {:noreply, socket}
   end
 
+  defp slide_titles do
+    %{
+      "do since the nineties" => 1,
+      "do since the 90s" => 1,
+      "a theory of cool software" => 2,
+      "what does qualify as cool" => 3,
+      "why do that in" => 4,
+      "why would you do that in" => 4,
+      "examples of inputs and outputs" => 5,
+      "examples of input and output" => 5,
+      "membrane enter the picture" => 6,
+      "unpack transformations a bit" => 7,
+      "unpack transformations a little bit" => 7,
+      "a new way of transforming" => 8,
+      "important to manage the complexity" => 9,
+      "important to manage that complexity" => 9,
+      "unpack this presentation a bit" => 10,
+      "thank you for your time" => 11
+    }
+  end
+
   @impl true
   def handle_info({:transcribed, text, part, start, stop}, socket) do
     socket = handle_command(text, socket)
@@ -182,6 +203,19 @@ defmodule LivelyWeb.MediaLive do
 
   def handle_command(text, socket) do
     lower = String.downcase(text)
+
+    socket =
+      case Enum.find(slide_titles, fn {t, _} ->
+             String.contains?(lower, t)
+           end) do
+        nil ->
+          socket
+
+        {_, sl} ->
+          socket
+          |> assign(slide: sl)
+          |> push_event("go-to-slide", %{slide: sl})
+      end
 
     socket =
       if String.contains?(lower, "go to slide") do
@@ -419,6 +453,8 @@ defmodule LivelyWeb.MediaLive do
 
     Mostly functional programming.
 
+    <img class="" src="https://underjord.io/assets/images/team-thin.jpg" />
+
 
     ---
 
@@ -437,6 +473,17 @@ defmodule LivelyWeb.MediaLive do
     - Take input, transform it, produce interesting output
     - Strive for something novel
     - CRUD ain't it, chief
+
+    ---
+
+    ## What qualifies as cool?
+
+    - Contextual, eye of the beholder
+    - Not too hard, not too easy
+    - The value of chasing shiny things
+    - Effortless cool is built on practice
+    - Cool is a motivator
+    - Constraints and challenges
 
     ---
 
@@ -529,10 +576,9 @@ defmodule LivelyWeb.MediaLive do
 
     ---
 
-    ## Questions?
+    ## Thank you
 
-    - Any questions about how this works is welcome.
-    - Suggestions on what you'd like to see as I grow the talk, also welcome :)
+    - Questions are welcome in the hallway track.
     - Follow my stuff on underjord.io (newsletter, blog, YouTube, Mastodon, podcasts)
 
     <img src="/underjord.svg">
