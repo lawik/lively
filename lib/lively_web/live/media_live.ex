@@ -282,7 +282,7 @@ defmodule LivelyWeb.MediaLive do
       |> Enum.flat_map(fn index ->
         Map.get(levels, index, [])
       end)
-      |> Enum.concat(for _ <- 1..@use_samples, do: @floor)
+      # |> Enum.concat(for _ <- 1..@use_samples, do: @floor)
       |> Enum.take(@use_samples)
       |> Enum.reverse()
 
@@ -377,7 +377,7 @@ defmodule LivelyWeb.MediaLive do
   @impl true
   def render(assigns) do
     ~H"""
-    <div class="absolute top-0 left-0 w-screen h-screen z-index-50">
+    <div id="sliders" class="absolute top-0 left-0 w-screen h-screen z-index-50" phx-update="ignore">
       <div class="reveal" style="width: 50vw;">
         <div class="slides">
           <section data-markdown>
@@ -402,6 +402,8 @@ defmodule LivelyWeb.MediaLive do
     - Take input, transform it, produce interesting output
     - Strive for something novel
     - CRUD ain't it, chief
+
+    ---
 
     ## Why Elixir?
 
@@ -493,21 +495,27 @@ defmodule LivelyWeb.MediaLive do
       </div>
     </div>
     <!-- Video as background -->
-    <div class="absolute top-0 left-0 w-screen h-screen overflow-hidden z-index-10">
+    <div
+      id="video-bg"
+      class="absolute top-0 left-0 w-screen h-screen overflow-hidden z-index-10"
+      phx-update="ignore"
+    >
       <video
-        class="absolute top-0 left-0 w-screen h-screen object-cover"
+        class="absolute top-0 left-0 w-screen h-screen object-cover z-index-1"
         id="video-preview"
         phx-hook="video"
         autoplay
       >
       </video>
       <svg
+        id="the-svg"
         xmlns="http://www.w3.org/2000/svg"
         fill="none"
         viewBox="0 0 1600 900"
         stroke-width="6"
         stroke="currentColor"
-        class="absolute top-0 left-0 stroke-white opacity-25"
+        class="absolute top-0 left-0 stroke-white opacity-25 z-index-10"
+        style="width: 50vw;"
         preserveAspectRatio="xMidYMin slice"
       >
         <path stroke-linecap="round" stroke-linejoin="round" d={levels_to_draw_commands(@levels)} />
