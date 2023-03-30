@@ -305,7 +305,7 @@ defmodule LivelyWeb.MediaLive do
       |> Enum.flat_map(fn index ->
         Map.get(levels, index, [])
       end)
-      |> Enum.concat(for _ <- 1..@use_samples, do: @floor)
+      # |> Enum.concat(for _ <- 1..@use_samples, do: @floor)
       |> Enum.take(@use_samples)
       |> Enum.reverse()
 
@@ -405,8 +405,8 @@ defmodule LivelyWeb.MediaLive do
   def render(assigns) do
     ~H"""
     <div
-      class="absolute top-0 left-0 w-screen h-screen z-index-50"
       id="reveal-holder"
+      class="absolute top-0 left-0 w-screen h-screen z-index-50"
       phx-update="ignore"
     >
       <div class="reveal" style="width: 100vw;">
@@ -547,15 +547,20 @@ defmodule LivelyWeb.MediaLive do
       </div>
     </div>
     <!-- Video as background -->
-    <div class="absolute top-0 left-0 w-screen h-screen overflow-hidden z-index-10 bg-black">
+    <div
+      id="video-bg"
+      class="absolute top-0 left-0 w-screen h-screen overflow-hidden z-index-10"
+      phx-update="ignore"
+    >
       <video
-        class="absolute top-0 left-0 w-screen h-screen object-cover"
+        class="absolute top-0 left-0 w-screen h-screen object-cover z-index-1"
         id="video-preview"
         phx-hook="video"
         autoplay
       >
       </video>
       <svg
+        id="the-svg"
         xmlns="http://www.w3.org/2000/svg"
         fill="none"
         viewBox="0 0 1600 900"
