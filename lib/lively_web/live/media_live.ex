@@ -205,7 +205,7 @@ defmodule LivelyWeb.MediaLive do
     lower = String.downcase(text)
 
     socket =
-      case Enum.find(slide_titles, fn {t, _} ->
+      case Enum.find(slide_titles(), fn {t, _} ->
              String.contains?(lower, t)
            end) do
         nil ->
@@ -638,7 +638,10 @@ defmodule LivelyWeb.MediaLive do
         -->
       </form>
     </div>
-    <div class="absolute min-w-full min-h-[48px] bottom-0 right-0 text-right overflow-hidden flex flex-nowrap bg-black text-white opacity-70 justify-end z-index-60 text-5xl mb-4">
+    <div
+      class="absolute min-w-full min-h-[48px] bottom-0 right-0 text-right overflow-hidden flex flex-nowrap bg-black text-white opacity-70 justify-end z-index-60 text-5xl pb-4"
+      style="z-index: 51;"
+    >
       <span
         :for={{{start, _stop, text}, index} <- @transcripts |> Enum.with_index() |> Enum.take(-50)}
         class="inline-block mr-2 whitespace-nowrap"
