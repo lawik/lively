@@ -17,7 +17,7 @@ defmodule Lively.Application do
       # Start Finch
       {Finch, name: Lively.Finch},
       # {MembraneTranscription.FancyWhisper, model: "base.en"},
-       MembraneTranscription.FancyWhisper, model: "tiny.en"},
+      {MembraneTranscription.FancyWhisper, model: "tiny.en"},
       # Start the Endpoint (http/https)
       LivelyWeb.Endpoint
       # Start a worker by calling: Lively.Worker.start_link(arg)

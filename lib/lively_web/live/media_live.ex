@@ -224,14 +224,15 @@ defmodule LivelyWeb.MediaLive do
     og = self()
 
     if socket.assigns.video do
+      {device, model} = socket.assigns.video
       IO.inspect("snapping")
 
       Task.start(fn ->
         result =
-          socket.assigns.video
+          device
           |> Face.snap()
           |> IO.inspect(label: "snap img")
-          |> Face.detect()
+          |> Face.detect(model)
           |> IO.inspect(label: "snap result")
 
         if not Enum.empty?(result.faces) do
@@ -253,10 +254,10 @@ defmodule LivelyWeb.MediaLive do
     Process.send_after(self(), :snap, @snap_interval)
     IO.puts("scheduled next snap")
 
-    socket =
-      assign(socket, face: face, face_path: result.path, face_dimensions: result.dimensions)
+    # socket =
+    #  assign(socket, face: face, face_path: result.path, face_dimensions: result.dimensions)
 
-    IO.puts("assigned")
+    # IO.puts("assigned")
 
     {:noreply, socket}
   end
@@ -399,7 +400,8 @@ defmodule LivelyWeb.MediaLive do
           buffer_duration: String.to_integer(d)
         )
 
-      video = Face.open()
+      # video = Face.open()
+      video = nil
       IO.inspect(video, label: "video device")
       Process.send_after(self(), :snap, @snap_interval)
 
@@ -652,11 +654,11 @@ defmodule LivelyWeb.MediaLive do
         autoplay
       >
       </video>-->
-      <img
+      <%!-- <img
         class="absolute top-0 left-0 w-screen h-screen object-cover z-index-1"
         id="video-preview"
         src="/assets/face.png"
-      />
+      /> --%>
       <svg
         id="the-svg"
         xmlns="http://www.w3.org/2000/svg"

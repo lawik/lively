@@ -4,7 +4,18 @@ defmodule Lively.Media.Face do
   @video_device 0
   def open do
     # VideoCapture.videoCapture(@video_device)
-    VideoCapture.videoCapture(@video_device)
+    device = VideoCapture.videoCapture(@video_device)
+
+    opts = [
+      top_k: 5000,
+      nms_threshold: 0.3,
+      conf_threshold: 0.9,
+      backend: Evision.Constant.cv_DNN_BACKEND_OPENCV(),
+      target: Evision.Constant.cv_DNN_TARGET_CPU()
+    ]
+
+    model = Evision.Zoo.FaceDetection.YuNet.init(:quant_model, opts)
+    {device, model}
   end
 
   def snap(device) do
@@ -15,17 +26,7 @@ defmodule Lively.Media.Face do
     Evision.imwrite(path, cap)
   end
 
-  def detect(image) do
-    opts = [
-      top_k: 5000,
-      nms_threshold: 0.3,
-      conf_threshold: 0.9,
-      backend: Evision.Constant.cv_DNN_BACKEND_OPENCV(),
-      target: Evision.Constant.cv_DNN_TARGET_CPU()
-    ]
-
-    model = Evision.Zoo.FaceDetection.YuNet.init(:quant_model, opts)
-
+  def detect(image, model) do
     results = Evision.Zoo.FaceDetection.YuNet.infer(model, image)
 
     landmark_names = [
