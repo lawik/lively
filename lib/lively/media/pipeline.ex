@@ -61,7 +61,7 @@ defmodule Lively.Media.Pipeline do
           priority: :high
         },
         transcription: %MembraneTranscription.Element{
-          buffer_duration: buffer_duration,
+          buffer_duration: 5,
           fancy?: true,
           priority: :normal
         },
@@ -121,7 +121,7 @@ defmodule Lively.Media.Pipeline do
     {:ok, state}
   end
 
-  @spacing 50
+  @spacing 20
   @impl true
   def handle_notification(
         {:amplitudes, amps},
@@ -148,7 +148,7 @@ defmodule Lively.Media.Pipeline do
   end
 
   @impl true
-  def handle_notification(notification, element, _context, state) do
+  def handle_notification(_notification, _element, _context, state) do
     # IO.inspect(notification, label: "notification")
     # IO.inspect(element, label: "element")
     {:ok, state}

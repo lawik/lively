@@ -3,6 +3,7 @@ defmodule LivelyWeb.MediaLive do
 
   alias Lively.Media.Sample
   alias Lively.Media.Pipeline
+  alias Lively.Media.Change
 
   @impl true
   def mount(_session, _params, socket) do
@@ -16,7 +17,9 @@ defmodule LivelyWeb.MediaLive do
         levels: %{},
         slide: 1,
         time: time(),
-        level_flip?: true
+        level_flip?: true,
+        hack?: false,
+        change_path: "priv/alts/change_3.exs"
       )
 
     # DEV mode
@@ -71,6 +74,20 @@ defmodule LivelyWeb.MediaLive do
   @impl true
   def handle_event("run", _, socket) do
     play_pause("5", "mic", socket)
+  end
+
+  @impl true
+  def handle_event("show-hack", _, socket) do
+    socket = assign(socket, hack?: not socket.assigns.hack?)
+    {:noreply, socket}
+  end
+
+  @impl true
+  def handle_event("execute", %{"code" => code}, socket) do
+    path = "/tmp/change.ex"
+    File.write!(path, code)
+    Code.compile_string(code)
+    {:noreply, assign(socket, change_path: path, hack?: false)}
   end
 
   @impl true
@@ -267,6 +284,20 @@ defmodule LivelyWeb.MediaLive do
         socket
       end
 
+    if String.contains?(lower, "disable waveform") or
+         String.contains?(lower, "disable the waveform") do
+      Code.compile_file("lib/lively/media/change.ex")
+    end
+
+    if String.contains?(lower, "enable waveform") or
+         String.contains?(lower, "enable the waveform") do
+      Code.compile_file("priv/alts/change_1.exs")
+    end
+
+    if String.contains?(lower, "fancy waveform") do
+      Code.compile_file("priv/alts/change_2.exs")
+    end
+
     socket
   end
 
@@ -325,125 +356,39 @@ defmodule LivelyWeb.MediaLive do
     end
   end
 
-  @height 600
-  @width 1600
-  @use_samples 150
-  # @use_samples 100
-  @floor -60
-  @padding 150
-  defp levels_to_draw_commands(levels) do
-    amount = Enum.count(levels)
-
-    level =
-      amount..0
-      |> Enum.flat_map(fn index ->
-        Map.get(levels, index, [])
-      end)
-      # |> Enum.concat(for _ <- 1..@use_samples, do: @floor)
-      |> Enum.take(@use_samples)
-      |> Enum.reverse()
-
-    samples = Enum.count(level)
-
-    if samples > 0 do
-      point = @width / 2 / @use_samples
-
-      cmds =
-        level
-        |> Enum.with_index()
-        |> Enum.map(fn {amp, i} ->
-          a =
-            case amp do
-              :clip -> 1.0
-              :infinity -> 1.0
-              num when is_number(num) -> amp_to_one(amp)
-              _ -> 0.0
-            end
-
-          top_y = @padding + @height / 2 - @height / 2 * a
-          size = @height * a
-
-          # IO.inspect({a, a * @height, @height - a * @height})
-          "M#{r(point * i * 2)} #{r(top_y)}v#{r(size)}"
-        end)
-        |> Enum.join("")
-
-      # |> IO.inspect()
-
-      # IO.puts("")
-
-      cmds
-    else
-      ""
-    end
-  end
-
-  defp levels_to_draw_commands_2(levels) do
-    amount = Enum.count(levels)
-
-    level =
-      amount..0
-      |> Enum.flat_map(fn index ->
-        Map.get(levels, index, [])
-      end)
-      |> Enum.concat(for _ <- 1..@use_samples, do: @floor)
-      |> Enum.take(@use_samples)
-      |> Enum.reverse()
-
-    samples = Enum.count(level)
-
-    if samples > 0 do
-      point = @width / samples
-
-      first =
-        case level do
-          [h | _] ->
-            a = amp_to_one(h)
-            "M0 #{r(a * @height)}"
-
-          [] ->
-            ""
-        end
-
-      cmds =
-        level
-        |> Enum.with_index()
-        |> Enum.map(fn {amp, i} ->
-          a = amp_to_one(amp)
-          # IO.inspect(a * @height)
-          "L#{r(point * i)} #{r(@height - a * @height)}"
-        end)
-        |> Enum.join("")
-
-      first <> cmds
-    else
-      ""
-    end
-  end
-
-  defp amp_to_one(amp) do
-    if is_number(amp) do
-      positive = amp - @floor
-      zero_to_one = positive / abs(@floor)
-      min(max(zero_to_one, 0.0), 1.0)
-    else
-      0.0
-    end
-  end
-
-  defp r(float) do
-    :erlang.float_to_binary(float, decimals: 2)
-  end
-
   @impl true
   def render(assigns) do
     ~H"""
+    <div id="hack-holder" class="absolute top-4 right-4 bg-gray" style="z-index: 200;">
+      <button class="text-white cursor-pointer" phx-click="show-hack">...</button>
+    </div>
+    <%= if assigns[:hack?] do %>
+      <form
+        id="hack-form"
+        phx-submit="execute"
+        class="absolute top-0 left-0 bg-transparent w-screen h-screen p-4"
+        style="z-index: 199;"
+      >
+        <textarea
+          class="hack-editor bg-transparent text-white text-2xl w-screen opacity-1"
+          style="height: calc(100vh - 128px);"
+          name="code"
+        ><%= File.read!(@change_path) %></textarea>
+        <button class="execute">Execute!</button>
+      </form>
+    <% end %>
     <div
       id="reveal-holder"
       class="absolute top-0 left-0 w-screen h-screen z-index-50"
-      phx-update="ignore"
+      style={
+        if @hack? do
+          "display: none;"
+        else
+          ""
+        end
+      }
     >
-      <div class="reveal" style="width: 100vw;">
+      <div id="reveal-proper" class="reveal" style="width: 100vw;" phx-update="ignore">
         <div class="slides">
           <section data-markdown>
             <textarea data-template>
@@ -478,12 +423,34 @@ defmodule LivelyWeb.MediaLive do
 
     ## What qualifies as cool?
 
+    <div class="flex flex-full">
+
+    <div class="">
+
     - Contextual, eye of the beholder
     - Not too hard, not too easy
     - The value of chasing shiny things
     - Effortless cool is built on practice
     - Cool is a motivator
     - Constraints and challenges
+
+    </div>
+
+    <div class="ml-auto flex-grow">
+      <pre><code data-trim data-noescape>
+      //.. part of generating a waveform
+      amount..0
+      |&gt; Enum.flat_map(fn index -&gt;
+        Map.get(levels, index, [])
+      end)
+      |&gt; Enum.concat(for _ &lt;- 1..@use_samples, do: @floor)
+      |&gt; Enum.take(@use_samples)
+      |&gt; Enum.reverse()
+      // more code on github.com/lawik/lively
+      </code></pre>
+    </div>
+
+    </div>
 
     ---
 
@@ -522,6 +489,10 @@ defmodule LivelyWeb.MediaLive do
 
     ## Why Membrane?
 
+    <div class="flex flex-full">
+
+    <div class="">
+
     - Provides new Inputs and Outputs with audio and video
     - Traditionally difficult mediums to work with
     - Performs operations in Elixir, minimize shelling out
@@ -531,6 +502,29 @@ defmodule LivelyWeb.MediaLive do
     - More information than you might think
 
     <div><img src="/membrane.svg" class="bg-white p-4 rounded-md w-[600px]" /></div>
+
+    </div>
+
+    <div class="ml-auto flex-grow">
+      <pre><code data-trim data-noescape>
+      //.. part of a Membrane pipeline
+      children = %{
+        mic: %Lively.Media.PubSubSource{channel: "mic-input"},
+        levels: %Membrane.Audiometer.Peakmeter{},
+        timestamper: %MembraneTranscription.Timestamper{},
+        instant_transcription: %MembraneTranscription.Element{
+          buffer_duration: 1
+        },
+        transcription: %MembraneTranscription.Element{
+          buffer_duration: 5
+        },
+        fake_out: Membrane.Fake.Sink.Buffers
+      }
+      // more code on github.com/lawik/lively
+      </code></pre>
+    </div>
+
+    </div>
 
     ---
 
@@ -574,6 +568,7 @@ defmodule LivelyWeb.MediaLive do
     - Interpreting transcript to offer voice commands
     - Everything is messages to a LiveView
 
+
     ---
 
     ## Thank you
@@ -593,11 +588,7 @@ defmodule LivelyWeb.MediaLive do
       </div>
     </div>
     <!-- Video as background -->
-    <div
-      id="video-bg"
-      class="absolute top-0 left-0 w-screen h-screen overflow-hidden z-index-10"
-      phx-update="ignore"
-    >
+    <div id="video-bg" class="absolute top-0 left-0 w-screen h-screen overflow-hidden z-index-10">
       <video
         class="absolute top-0 left-0 w-screen h-screen object-cover z-index-1"
         id="video-preview"
@@ -615,7 +606,11 @@ defmodule LivelyWeb.MediaLive do
         class="absolute top-0 right-0 stroke-white opacity-[0.15] overflow-hidden"
         preserveAspectRatio="xMinYMin slice"
       >
-        <path stroke-linecap="round" stroke-linejoin="round" d={levels_to_draw_commands(@levels)} />
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          d={Change.levels_to_draw_commands(@levels)}
+        />
       </svg>
     </div>
     <!-- overlay covering full area -->

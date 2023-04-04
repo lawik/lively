@@ -59,6 +59,9 @@ defmodule Lively.MixProject do
       {:membrane_portaudio_plugin, "~> 0.11"},
       {:membrane_audiometer_plugin, ">= 0.0.0"},
       {:exmoji, "~> 0.3.0"},
+      {:nx,
+       [env: :prod, git: "https://github.com/elixir-nx/nx.git", sparse: "nx", override: true]},
+      {:evision, "~> 0.1"},
 
       # My stuff
       {:membrane_transcription, path: "../membrane_transcription"}
