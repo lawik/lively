@@ -1,51 +1,88 @@
-# defmodule Lively.Media.Face do
-#   def detect do
-#     {backend, target} = Evision.Zoo.to_quoted_backend_and_target(attrs)
+defmodule Lively.Media.Face do
+  alias Evision.VideoCapture
 
-#     opts = [
-#       top_k: attrs["top_k"],
-#       nms_threshold: attrs["nms_threshold"],
-#       conf_threshold: attrs["conf_threshold"],
-#       backend: backend,
-#       target: target
-#     ]
+  @video_device 0
+  def open do
+    # VideoCapture.videoCapture(@video_device)
+    VideoCapture.videoCapture(@video_device)
+  end
 
-#     model =
-#       case attrs["variant_id"] do
-#         "yunet_quant" ->
-#           :quant_model
+  def snap(device) do
+    VideoCapture.read(device)
+  end
 
-#         _ ->
-#           :default_model
-#       end
+  def save_png(cap, path) do
+    Evision.imwrite(path, cap)
+  end
 
-#     [
-#       quote do
-#         model = Evision.Zoo.FaceDetection.YuNet.init(unquote(model), unquote(opts))
-#       end,
-#       quote do
-#         image_input = Kino.Input.image("Image")
-#         form = Kino.Control.form([image: image_input], submit: "Run")
+  def detect(image) do
+    opts = [
+      top_k: 5000,
+      nms_threshold: 0.3,
+      conf_threshold: 0.9,
+      backend: Evision.Constant.cv_DNN_BACKEND_OPENCV(),
+      target: Evision.Constant.cv_DNN_TARGET_CPU()
+    ]
 
-#         frame = Kino.Frame.new()
+    model = Evision.Zoo.FaceDetection.YuNet.init(:quant_model, opts)
 
-#         form
-#         |> Kino.Control.stream()
-#         |> Stream.filter(& &1.data.image)
-#         |> Kino.listen(fn %{data: %{image: image}} ->
-#           Kino.Frame.render(frame, Kino.Markdown.new("Running..."))
+    results = Evision.Zoo.FaceDetection.YuNet.infer(model, image)
 
-#           image = Evision.Mat.from_binary(image.data, {:u, 8}, image.height, image.width, 3)
-#           results = Evision.Zoo.FaceDetection.YuNet.infer(model, image)
+    landmark_names = [
+      # right eye
+      :right_eye,
+      # left eye
+      :left_eye,
+      # nose tip
+      :nose_tip,
+      # right mouth corner
+      :right_mouth_corner,
+      # left mouth corner
+      :left_mouth_corner
+    ]
 
-#           image = Evision.cvtColor(image, Evision.Constant.cv_COLOR_RGB2BGR())
+    IO.inspect(results)
 
-#           Evision.Zoo.FaceDetection.YuNet.visualize(image, results)
-#           |> then(&Kino.Frame.render(frame, Kino.Image.new(Evision.imencode(".png", &1), :png)))
-#         end)
+    if results do
+      faces =
+        case results.shape do
+          {num_faces, 15} when num_faces > 0 ->
+            results = Evision.Mat.to_nx(results, Nx.BinaryBackend)
 
-#         Kino.Layout.grid([form, frame], boxed: true, gap: 16)
-#       end
-#     ]
-#   end
-# end
+            for i <- 0..(num_faces - 1) do
+              det = results[i]
+              [b0, b1, b2, b3] = Nx.to_flat_list(Nx.as_type(det[0..3], :s32))
+
+              face = %{
+                face_top_left: {b0, b1},
+                face_bottom_right: {b0 + b2, b1 + b3}
+              }
+
+              landmarks = Nx.reshape(Nx.as_type(det[4..13], :s32), {5, 2})
+
+              for idx <- 0..4, into: face do
+                landmark = List.to_tuple(Nx.to_flat_list(landmarks[idx]))
+                {Enum.at(landmark_names, idx), landmark}
+              end
+            end
+
+          _ ->
+            []
+        end
+
+      save_png(image, "priv/static/assets/face.png")
+
+      %{
+        dimensions: {elem(image.shape, 1), elem(image.shape, 0)},
+        faces: faces,
+        path: "assets/face.png"
+      }
+    else
+      %{
+        dimensions: {elem(image.shape, 1), elem(image.shape, 0)},
+        faces: [],
+        path: nil
+      }
+    end
+  end
+end

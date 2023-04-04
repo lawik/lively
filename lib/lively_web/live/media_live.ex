@@ -4,6 +4,8 @@ defmodule LivelyWeb.MediaLive do
   alias Lively.Media.Sample
   alias Lively.Media.Pipeline
   alias Lively.Media.Change
+  alias Lively.Media.Face
+  @snap_interval 2000
 
   @impl true
   def mount(_session, _params, socket) do
@@ -19,7 +21,11 @@ defmodule LivelyWeb.MediaLive do
         time: time(),
         level_flip?: true,
         hack?: false,
-        change_path: "priv/alts/change_3.exs"
+        change_path: "priv/alts/change_3.exs",
+        video: nil,
+        face: nil,
+        face_path: nil,
+        face_dimensions: nil
       )
 
     # DEV mode
@@ -213,6 +219,48 @@ defmodule LivelyWeb.MediaLive do
     {:noreply, socket}
   end
 
+  def handle_info(:snap, socket) do
+    IO.puts("snap time!")
+    og = self()
+
+    if socket.assigns.video do
+      IO.inspect("snapping")
+
+      Task.start(fn ->
+        result =
+          socket.assigns.video
+          |> Face.snap()
+          |> IO.inspect(label: "snap img")
+          |> Face.detect()
+          |> IO.inspect(label: "snap result")
+
+        if not Enum.empty?(result.faces) do
+          IO.inspect(result, label: "face detected")
+          send(og, {:process_snap, result})
+        else
+          Process.send_after(og, :snap, @snap_interval)
+        end
+      end)
+    end
+
+    {:noreply, socket}
+  end
+
+  def handle_info({:process_snap, result}, socket) do
+    IO.puts("processing snap")
+    [face | _] = result.faces
+    IO.puts("extracted face")
+    Process.send_after(self(), :snap, @snap_interval)
+    IO.puts("scheduled next snap")
+
+    socket =
+      assign(socket, face: face, face_path: result.path, face_dimensions: result.dimensions)
+
+    IO.puts("assigned")
+
+    {:noreply, socket}
+  end
+
   def handle_info(notif, socket) do
     IO.inspect(notif, label: "received")
     {:noreply, socket}
@@ -351,8 +399,12 @@ defmodule LivelyWeb.MediaLive do
           buffer_duration: String.to_integer(d)
         )
 
+      video = Face.open()
+      IO.inspect(video, label: "video device")
+      Process.send_after(self(), :snap, @snap_interval)
+
       IO.puts("started")
-      {:noreply, assign(socket, pipeline: pid, transcripts: [])}
+      {:noreply, assign(socket, pipeline: pid, transcripts: [], video: video)}
     end
   end
 
@@ -588,14 +640,23 @@ defmodule LivelyWeb.MediaLive do
       </div>
     </div>
     <!-- Video as background -->
-    <div id="video-bg" class="absolute top-0 left-0 w-screen h-screen overflow-hidden z-index-10">
-      <video
+    <div
+      id="video-bg"
+      class="absolute top-0 left-0 w-screen h-screen overflow-hidden z-index-10"
+      phx-hook="audio"
+    >
+      <!--<video
         class="absolute top-0 left-0 w-screen h-screen object-cover z-index-1"
         id="video-preview"
         phx-hook="video"
         autoplay
       >
-      </video>
+      </video>-->
+      <img
+        class="absolute top-0 left-0 w-screen h-screen object-cover z-index-1"
+        id="video-preview"
+        src="/assets/face.png"
+      />
       <svg
         id="the-svg"
         xmlns="http://www.w3.org/2000/svg"

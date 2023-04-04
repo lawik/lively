@@ -72,7 +72,7 @@ let processing = false;
 let running = false;
 
 let hooks = {
-    video: {
+    audio: {
         mounted() {
             let ctx = this;
             console.log("mounted")
@@ -80,7 +80,7 @@ let hooks = {
             socket.connect();
             let channel = socket.channel("audio:lobby", {});
 
-            let video = this.el;
+            //let video = this.el;
             var errorCallback = function (e) {
                 console.log('Reeeejected!', e);
             };
@@ -97,20 +97,6 @@ let hooks = {
                 Reveal.left()
             })
 
-            // Not showing vendor prefixes.
-            navigator.getUserMedia({ video: true, audio: false }, function (localMediaStream) {
-                console.log(localMediaStream)
-                //video.src = window.URL.createObjectURL(localMediaStream);
-                //video.srcObject = localMediaStream;
-                console.log("set up")
-
-                // Note: onloadedmetadata doesn't fire in Chrome when using it with getUserMedia.
-                // See crbug.com/110938.
-                video.onloadedmetadata = function (e) {
-                    console.log("onloadedmetadata");
-                    // Ready to go. Do some stuff.
-                };
-            }, errorCallback);
 
             function open() {
                 window.removeEventListener("click", open);
