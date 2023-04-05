@@ -5,7 +5,7 @@ defmodule LivelyWeb.MediaLive do
   alias Lively.Media.Pipeline
   alias Lively.Media.Change
   alias Lively.Media.Face
-  @snap_interval 2000
+  @snap_interval 1000
 
   @impl true
   def mount(_session, _params, socket) do
@@ -248,16 +248,10 @@ defmodule LivelyWeb.MediaLive do
   end
 
   def handle_info({:process_snap, result}, socket) do
-    IO.puts("processing snap")
     [face | _] = result.faces
-    IO.puts("extracted face")
     Process.send_after(self(), :snap, @snap_interval)
-    IO.puts("scheduled next snap")
 
-    # socket =
-    #  assign(socket, face: face, face_path: result.path, face_dimensions: result.dimensions)
-
-    # IO.puts("assigned")
+    socket = assign(socket, face: face, face_details: result)
 
     {:noreply, socket}
   end
@@ -400,8 +394,8 @@ defmodule LivelyWeb.MediaLive do
           buffer_duration: String.to_integer(d)
         )
 
-      # video = Face.open()
-      video = nil
+      video = Face.open()
+      # video = nil
       IO.inspect(video, label: "video device")
       Process.send_after(self(), :snap, @snap_interval)
 
@@ -654,11 +648,28 @@ defmodule LivelyWeb.MediaLive do
         autoplay
       >
       </video>-->
-      <%!-- <img
-        class="absolute top-0 left-0 w-screen h-screen object-cover z-index-1"
-        id="video-preview"
-        src="/assets/face.png"
-      /> --%>
+      <%= if @face and false do %>
+      <div class="absolute top-32 right-32 w-[480px] p-4 pb-8 z-index-1 bg-white rotate-12">
+
+        <%= with {width, height} <- @face_details.dimensions do %>
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox={"0 0 #{width} #{height}"}
+            stroke-width="7"
+            stroke="currentColor"
+            class="stroke-white w-auto"
+          >
+          <image href={@face_details.path <> "?hash=" <> @face_details.hash} height={height} width={width} />
+
+          <%= for {place, {x, y}} <- @face do %>
+            <circle cx={x} cy={y} r="10" />
+          <% end %>
+        </svg>
+        <% end %>
+      </div>
+      <% end %>
+
       <svg
         id="the-svg"
         xmlns="http://www.w3.org/2000/svg"

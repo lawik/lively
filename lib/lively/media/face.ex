@@ -71,18 +71,28 @@ defmodule Lively.Media.Face do
             []
         end
 
-      save_png(image, "priv/static/assets/face.png")
+      save_png(image, "priv/faces/face.png")
+
+      bin = File.read!("priv/faces/face.png")
+
+      hash =
+        :sha256
+        |> :crypto.hash(bin)
+        |> Base.encode16()
+        |> String.downcase()
 
       %{
         dimensions: {elem(image.shape, 1), elem(image.shape, 0)},
         faces: faces,
-        path: "assets/face.png"
+        path: "/faces/face.png",
+        hash: hash
       }
     else
       %{
         dimensions: {elem(image.shape, 1), elem(image.shape, 0)},
         faces: [],
-        path: nil
+        path: nil,
+        hash: nil
       }
     end
   end

@@ -40,3 +40,4 @@ npm-debug.log
 *.db-*
 
 priv/samples
+priv/faces/*
