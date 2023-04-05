@@ -5,7 +5,7 @@ defmodule LivelyWeb.MediaLive do
   alias Lively.Media.Pipeline
   alias Lively.Media.Change
   alias Lively.Media.Face
-  @snap_interval 1000
+  @snap_interval 5000
 
   @impl true
   def mount(_session, _params, socket) do
@@ -25,7 +25,9 @@ defmodule LivelyWeb.MediaLive do
         video: nil,
         face: nil,
         face_path: nil,
-        face_dimensions: nil
+        face_dimensions: nil,
+        face_padding_x: 4,
+        face_padding_y: 8
       )
 
     # DEV mode
@@ -648,26 +650,43 @@ defmodule LivelyWeb.MediaLive do
         autoplay
       >
       </video>-->
-      <%= if @face and false do %>
-      <div class="absolute top-32 right-32 w-[480px] p-4 pb-8 z-index-1 bg-white rotate-12">
+      <%= if @face do %>
+        <div class="absolute -top-4 -right-2 w-[320px] p-2 z-index-1 rotate-12">
+          <%= with {width, height} <- @face_details.dimensions do %>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              id={"img-#{@face_details.hash}"}
+              viewBox={"0 0 #{width} #{height}"}
+              stroke-width="19"
+              stroke="currentColor"
+              class="w-auto transition-opacity delay-1000 fade-out"
+              style="stroke: #7552ec;"
+            >
+              <image
+                href={@face_details.path <> "?hash=" <> @face_details.hash}
+                height={height}
+                width={width}
+              />
 
-        <%= with {width, height} <- @face_details.dimensions do %>
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox={"0 0 #{width} #{height}"}
-            stroke-width="7"
-            stroke="currentColor"
-            class="stroke-white w-auto"
-          >
-          <image href={@face_details.path <> "?hash=" <> @face_details.hash} height={height} width={width} />
-
-          <%= for {place, {x, y}} <- @face do %>
-            <circle cx={x} cy={y} r="10" />
+              <%= with {x1, y1} <- @face[:face_top_left],
+                       {x2, y2} <- @face[:face_bottom_right],
+                       xpad <- ((width / 100) * @face_padding_x),
+                       ypad <- ((height / 100) * @face_padding_y) do %>
+                <rect
+                  x={x1 - xpad}
+                  y={y1 - ypad}
+                  width={x2 - x1 + xpad * 2}
+                  height={y2 - y1 + ypad * 2}
+                />
+              <% end %>
+              <!--<%= with {x1, y1} <- @face[:left_eye],
+                       {x2, y2} <- @face[:right_eye] do %>
+                <line x1={x1} y1={y1} x2={x2} y2={y2} />
+              <% end %>-->
+            </svg>
           <% end %>
-        </svg>
-        <% end %>
-      </div>
+        </div>
       <% end %>
 
       <svg

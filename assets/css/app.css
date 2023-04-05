@@ -47,4 +47,18 @@
         font-weight: bold;
         text-transform: uppercase;
     }
+
+    .fade-out {
+        animation: 3s ease-out 2s 1 normal forwards running fadeout;
+    }
+
+    @keyframes fadeout {
+        0% {
+            opacity: 1;
+        }
+
+        100% {
+            opacity: 0;
+        }
+    }
 }
