@@ -522,18 +522,29 @@ defmodule LivelyWeb.MediaLive do
 
     ## Inputs & Outputs
 
+    <div class="flex flex-full">
+
+    <div class="">
+
     - Inputs / Sources
       - APIs
       - Calendar URLs
       - Chat bots (Telegram/Slack)
       - Hardware controls
       - Webhooks
+
+    </div>
+    <div class="">
+
     - Outputs / Sinks
       - APIs
       - Web pages (LiveView)
       - Desktop apps (wx)
       - Hardware (lights, displays)
       - Chat bots (Telegram/Slack)
+
+    </div>
+    </div>
 
     ---
 
@@ -543,13 +554,12 @@ defmodule LivelyWeb.MediaLive do
 
     <div class="">
 
-    - Provides new Inputs and Outputs with audio and video
-    - Traditionally difficult mediums to work with
-    - Performs operations in Elixir, minimize shelling out
-    - ffmpeg is rough to integrate with
-    - Makes the results practical to use in Elixir
-    - Make the actual process accessible in Elixir
-    - More information than you might think
+    - Audio & Video as Input & Outputs
+    - Traditionally difficult media
+    - Integrate in Elixir, not FFMPEG
+    - Results practical usable in Elixir
+    - Progress accessible from Elixir
+    - More stuff than you expect
 
     <div><img src="/membrane.svg" class="bg-white p-4 rounded-md w-[600px]" /></div>
 
@@ -588,13 +598,13 @@ defmodule LivelyWeb.MediaLive do
 
     ## ML transforming unlikely formats
 
-    - Not a big ML enthusiast but see some utility there
-    - Allows transforming between messy formats
-    - Text to image, weirdly through diffusion
+    - Controversial but getting very useful
+    - Allows transforming between *messy* formats
+    - Text to image, weirdly, through diffusion
     - Image to text, OCR quite well, object classification quite poorly
     - Audio to text, transcription
     - Text to audio, voice synthesis
-    - Bumblebee makes this a tool box for builders like me
+    - Bumblebee & Evision makes this a tool box for builders
 
     ---
 
@@ -674,16 +684,28 @@ defmodule LivelyWeb.MediaLive do
                        xpad <- ((width / 100) * @face_padding_x),
                        ypad <- ((height / 100) * @face_padding_y) do %>
                 <rect
+                  stroke="white"
+                  stroke-width="9"
                   x={x1 - xpad}
                   y={y1 - ypad}
                   width={x2 - x1 + xpad * 2}
                   height={y2 - y1 + ypad * 2}
                 />
+                <!--<%= with {ex1, ey1} <- @face[:left_eye],
+                       {ex2, ey2} <- @face[:right_eye],
+                       k <- (ey2-ey1) / (ex2-ex1),
+                       x_calc <- ((ex1-x1) * k) + ex1 do %>
+                <line
+                  stroke="white"
+                  stroke-width="9"
+                  x1={x1 - xpad}
+                  y1={y1}
+                  x2={y1 + (height / 40)}
+                  y2={}
+                />-->
               <% end %>
-              <!--<%= with {x1, y1} <- @face[:left_eye],
-                       {x2, y2} <- @face[:right_eye] do %>
-                <line x1={x1} y1={y1} x2={x2} y2={y2} />
-              <% end %>-->
+              <% end %>
+
             </svg>
           <% end %>
         </div>
