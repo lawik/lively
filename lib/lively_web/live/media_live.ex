@@ -6,6 +6,7 @@ defmodule LivelyWeb.MediaLive do
   alias Lively.Media.Change
   alias Lively.Media.Face
   @snap_interval 5000
+  @whisper_emoji ["✨", "👍", "💖", "💀"]
 
   @impl true
   def mount(_session, _params, socket) do
@@ -27,7 +28,8 @@ defmodule LivelyWeb.MediaLive do
         face_path: nil,
         face_dimensions: nil,
         face_padding_x: 4,
-        face_padding_y: 8
+        face_padding_y: 8,
+        emoji_state: {"foo-emoji", Enum.random(@whisper_emoji)}
       )
 
     # DEV mode
@@ -129,7 +131,13 @@ defmodule LivelyWeb.MediaLive do
 
   @impl true
   def handle_info({:transcribed, text, part, start, stop}, socket) do
-    socket = handle_command(text, socket)
+    last_text =
+      case socket.assigns.transcripts do
+        [{_, _, last_text} | _] -> last_text
+        _ -> ""
+      end
+
+    socket = handle_command(last_text <> text, socket)
 
     transcripts =
       if part == :final and text == "[BLANK_AUDIO]" do
@@ -266,7 +274,10 @@ defmodule LivelyWeb.MediaLive do
   end
 
   def handle_command(text, socket) do
-    lower = String.downcase(text)
+    lower =
+      text
+      |> String.downcase()
+      |> String.replace(~r/[\.,"!?]+/, "")
 
     socket =
       case Enum.find(slide_titles(), fn {t, _} ->
@@ -344,6 +355,15 @@ defmodule LivelyWeb.MediaLive do
     if String.contains?(lower, "fancy waveform") do
       Code.compile_file("priv/alts/change_2.exs")
     end
+
+    socket =
+      if String.contains?(lower, "thank you whisper") do
+        assign(socket,
+          emoji_state: {inspect(System.monotonic_time()), Enum.random(@whisper_emoji)}
+        )
+      else
+        socket
+      end
 
     socket
   end
@@ -708,6 +728,10 @@ defmodule LivelyWeb.MediaLive do
             </svg>
           <% end %>
         </div>
+      <% end %>
+
+      <%= with {emoji_id, emoji} <- @emoji_state do %>
+        <div id={emoji_id} class="absolute top-0 right-0 fade-out" style="font-size: 72px; width: 72px;"><%= emoji %></div>
       <% end %>
 
       <svg
