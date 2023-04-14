@@ -6,6 +6,7 @@ defmodule LivelyWeb.MediaLive do
   alias Lively.Media.Change
   alias Lively.Media.Face
   @snap_interval 5000
+  @whisper_emoji ["✨", "👍", "💖", "💀"]
 
   @impl true
   def mount(_session, _params, socket) do
@@ -27,7 +28,8 @@ defmodule LivelyWeb.MediaLive do
         face_path: nil,
         face_dimensions: nil,
         face_padding_x: 4,
-        face_padding_y: 8
+        face_padding_y: 8,
+        emoji_state: {"foo-emoji", Enum.random(@whisper_emoji)}
       )
 
     # DEV mode
@@ -108,26 +110,34 @@ defmodule LivelyWeb.MediaLive do
     %{
       "do since the nineties" => 1,
       "do since the 90s" => 1,
-      "a theory of cool software" => 2,
+      "theory of cool software" => 2,
       "what does qualify as cool" => 3,
       "why do that in" => 4,
       "why would you do that in" => 4,
       "examples of inputs and outputs" => 5,
       "examples of input and output" => 5,
       "membrane enter the picture" => 6,
+      "enter the picture" => 6,
       "unpack transformations a bit" => 7,
       "unpack transformations a little bit" => 7,
       "a new way of transforming" => 8,
       "important to manage the complexity" => 9,
       "important to manage that complexity" => 9,
       "unpack this presentation a bit" => 10,
+      "unpack this presentation a little bit" => 10,
       "thank you for your time" => 11
     }
   end
 
   @impl true
   def handle_info({:transcribed, text, part, start, stop}, socket) do
-    socket = handle_command(text, socket)
+    last_text =
+      case socket.assigns.transcripts do
+        [{_, _, last_text} | _] -> last_text
+        _ -> ""
+      end
+
+    socket = handle_command(last_text <> text, socket)
 
     transcripts =
       if part == :final and text == "[BLANK_AUDIO]" do
@@ -264,7 +274,10 @@ defmodule LivelyWeb.MediaLive do
   end
 
   def handle_command(text, socket) do
-    lower = String.downcase(text)
+    lower =
+      text
+      |> String.downcase()
+      |> String.replace(~r/[\.,"!?]+/, "")
 
     socket =
       case Enum.find(slide_titles(), fn {t, _} ->
@@ -342,6 +355,15 @@ defmodule LivelyWeb.MediaLive do
     if String.contains?(lower, "fancy waveform") do
       Code.compile_file("priv/alts/change_2.exs")
     end
+
+    socket =
+      if String.contains?(lower, "thank you whisper") do
+        assign(socket,
+          emoji_state: {inspect(System.monotonic_time()), Enum.random(@whisper_emoji)}
+        )
+      else
+        socket
+      end
 
     socket
   end
@@ -465,9 +487,10 @@ defmodule LivelyWeb.MediaLive do
 
     ## A theory of cool
 
-    - Take input, transform it, produce interesting output
-    - Strive for something novel
-    - CRUD ain't it, chief
+    - Take input
+    - Transform your input
+    - Produce interesting output
+    - Evoke an emotional reaction
 
     ---
 
@@ -479,6 +502,7 @@ defmodule LivelyWeb.MediaLive do
 
     - Contextual, eye of the beholder
     - Not too hard, not too easy
+    - CRUD ain't it, chief
     - The value of chasing shiny things
     - Effortless cool is built on practice
     - Cool is a motivator
@@ -509,8 +533,8 @@ defmodule LivelyWeb.MediaLive do
     - Great for dealing with inputs.
     - Simple ways of dealing with state.
     - Does not require a bunch of extra infrastructure
-    - LiveView made it incredible for building expressive outputs.
-    - Wiring inputs to outputs could not be easier.
+    - High-level means of loosely coupled communication
+    - LiveView is incredible for building expressive outputs.
 
     <div class="flex gap-4">
     <div><img src="/elixir.png" class="bg-white p-4 rounded-md w-[200px]" /></div>
@@ -520,7 +544,7 @@ defmodule LivelyWeb.MediaLive do
 
     ---
 
-    ## Inputs & Outputs
+    ## Some examples of Inputs & Outputs
 
     <div class="flex flex-full">
 
@@ -554,12 +578,12 @@ defmodule LivelyWeb.MediaLive do
 
     <div class="">
 
-    - Audio & Video as Input & Outputs
-    - Traditionally difficult media
-    - Integrate in Elixir, not FFMPEG
-    - Results practical usable in Elixir
-    - Progress accessible from Elixir
-    - More stuff than you expect
+    - Audio & Video on the web is hard
+    - No more FFMPEG-driven development
+    - Break apart the media processing
+    - Built for livestreaming, hard problems first
+    - Lots of inputs, outputs and transformations
+    - Cool Theory™ compliant
 
     <div><img src="/membrane.svg" class="bg-white p-4 rounded-md w-[600px]" /></div>
 
@@ -592,7 +616,8 @@ defmodule LivelyWeb.MediaLive do
 
     - Taking text from one place and putting it in another place is easy enough
     - Libraries like Image make manipulating pictures very powerful
-    - Membrane enables transformations for audio and video.
+    - Membrane enables transformations for audio and video
+    - A new challenger approaches?
 
     ---
 
@@ -611,12 +636,13 @@ defmodule LivelyWeb.MediaLive do
     ## Managing complexity
 
     - No extra infrastructure, all in a BEAM application
-    - Media handling well abstracted
-    - Machine learning well abstracted
-    - Live web UI also well abstracted
-    - Communication and coordination, thoroughly available
-    - The most complicated code is the math to calculate duration from bitrate
-    - Oh, and the SVG for the waveform was confusing
+    - Media handling, flexible and powerful
+    - Machine learning, without math
+    - Live web UI, minimal effort reactive UI
+    - Communication and coordination, solid defaults
+    - Make hard things easier, push the boundary of cool
+    - Blazing trails, not beaten paths
+    - Always collaborating, always sharing
 
     ---
 
@@ -626,7 +652,11 @@ defmodule LivelyWeb.MediaLive do
     - Low-latency poor-quality, near-instant transcription
     - Slower better transcription using a longer section of speech
     - Interpreting transcript to offer voice commands
+    - All CPU, no cooler, lightweight laptop
+    - Occasional face detection
     - Everything is messages to a LiveView
+    - The most complicated code is the math to calculate duration from bitrate
+    - Oh, and the SVG for the waveform was confusing
 
 
     ---
@@ -634,7 +664,8 @@ defmodule LivelyWeb.MediaLive do
     ## Thank you
 
     - Questions are welcome in the hallway track.
-    - Follow my stuff on underjord.io (newsletter, blog, YouTube, Mastodon, podcasts)
+    - All code and the entire presentation on [github.com/lawik/lively](jkjk)
+    - Follow my stuff on [underjord.io](jkjk), [youtube.com/c/underjord](jkjk), [beamrad.io](jkjk) & [regprog.com](jkjk)
 
     <img src="/underjord.svg">
 
@@ -691,24 +722,16 @@ defmodule LivelyWeb.MediaLive do
                   width={x2 - x1 + xpad * 2}
                   height={y2 - y1 + ypad * 2}
                 />
-                <!--<%= with {ex1, ey1} <- @face[:left_eye],
-                       {ex2, ey2} <- @face[:right_eye],
-                       k <- (ey2-ey1) / (ex2-ex1),
-                       x_calc <- ((ex1-x1) * k) + ex1 do %>
-                <line
-                  stroke="white"
-                  stroke-width="9"
-                  x1={x1 - xpad}
-                  y1={y1}
-                  x2={y1 + (height / 40)}
-                  y2={}
-                />-->
-              <% end %>
+
               <% end %>
 
             </svg>
           <% end %>
         </div>
+      <% end %>
+
+      <%= with {emoji_id, emoji} <- @emoji_state do %>
+        <div id={emoji_id} class="absolute top-0 right-0 fade-out" style="font-size: 72px; width: 72px;"><%= emoji %></div>
       <% end %>
 
       <svg
