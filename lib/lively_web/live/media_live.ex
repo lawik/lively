@@ -133,6 +133,7 @@ defmodule LivelyWeb.MediaLive do
   def handle_info({:transcribed, text, part, start, stop}, socket) do
     last_text =
       case socket.assigns.transcripts do
+        [{_, _, {:safe, _skip}} | _] -> ""
         [{_, _, last_text} | _] -> last_text
         _ -> ""
       end
@@ -357,7 +358,7 @@ defmodule LivelyWeb.MediaLive do
     end
 
     socket =
-      if String.contains?(lower, "thank you whisper") do
+      if String.contains?(lower, "thank you whisper") or String.contains?(lower, "thanks whisper") do
         assign(socket,
           emoji_state: {inspect(System.monotonic_time()), Enum.random(@whisper_emoji)}
         )
@@ -641,8 +642,9 @@ defmodule LivelyWeb.MediaLive do
     - Live web UI, minimal effort reactive UI
     - Communication and coordination, solid defaults
     - Make hard things easier, push the boundary of cool
-    - Blazing trails, not beaten paths
-    - Always collaborating, always sharing
+    - Elixir ecosystem uniquely suited to blazing trails
+    - Better than the industry standard?
+    - This presentation can fit so much complexity
 
     ---
 
@@ -655,8 +657,7 @@ defmodule LivelyWeb.MediaLive do
     - All CPU, no cooler, lightweight laptop
     - Occasional face detection
     - Everything is messages to a LiveView
-    - The most complicated code is the math to calculate duration from bitrate
-    - Oh, and the SVG for the waveform was confusing
+    - Both parlor tricks & really useful stuff
 
 
     ---
