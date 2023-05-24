@@ -64,7 +64,8 @@ defmodule Lively.MixProject do
       {:evision, "~> 0.1"},
 
       # My stuff
-      {:membrane_transcription, path: "../membrane_transcription"}
+      {:membrane_transcription,
+       git: "https://github.com/lawik/membrane_transcription", branch: "main"}
     ]
   end
 
