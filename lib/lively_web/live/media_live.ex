@@ -723,16 +723,20 @@ defmodule LivelyWeb.MediaLive do
                   width={x2 - x1 + xpad * 2}
                   height={y2 - y1 + ypad * 2}
                 />
-
               <% end %>
-
             </svg>
           <% end %>
         </div>
       <% end %>
 
       <%= with {emoji_id, emoji} <- @emoji_state do %>
-        <div id={emoji_id} class="absolute top-0 right-0 fade-out" style="font-size: 72px; width: 72px;"><%= emoji %></div>
+        <div
+          id={emoji_id}
+          class="absolute top-0 right-0 fade-out"
+          style="font-size: 72px; width: 72px;"
+        >
+          <%= emoji %>
+        </div>
       <% end %>
 
       <svg
@@ -773,23 +777,18 @@ defmodule LivelyWeb.MediaLive do
       </form>
     </div>
     <div
-      class="absolute min-w-full min-h-[48px] bottom-0 right-0 text-right overflow-hidden flex flex-nowrap bg-black text-white opacity-70 justify-end z-index-60 text-5xl pb-4"
+      class="absolute min-w-full left-0 bottom-0 right-0 text-left overflow-hidden text-white opacity-70 z-index-60 text-5xl px-64"
       style="z-index: 51;"
     >
-      <span
+      <p
         :for={{{start, _stop, text}, index} <- @transcripts |> Enum.with_index() |> Enum.take(-50)}
-        class="inline-block mr-2 whitespace-nowrap"
+        class="mb-8"
         id={"transcription-#{index}"}
       >
         <%= if not is_nil(text) do %>
-          <div class="flex text-xs text-gray-400 gap-4">
-            <span class="mr-auto"><%= round(start / 1000) %></span>
-          </div>
-          <div>
-            <%= text %>
-          </div>
+          <%= text %>
         <% end %>
-      </span>
+      </p>
       <span
         :for={{text, i} <- @instants |> Enum.reject(&is_nil/1) |> Enum.with_index() |> Enum.reverse()}
         class="inline-block mr-1 whitespace-nowrap animate-pulse"
