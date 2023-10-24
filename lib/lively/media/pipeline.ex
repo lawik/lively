@@ -55,13 +55,13 @@ defmodule Lively.Media.Pipeline do
         timestamper: %MembraneTranscription.Timestamper{
           bytes_per_second: @byte_per_second
         },
-        instant_transcription: %MembraneTranscription.Element{
-          buffer_duration: 1,
-          fancy?: true,
-          priority: :high
-        },
+        # instant_transcription: %MembraneTranscription.Element{
+        #  buffer_duration: 1,
+        #  fancy?: true,
+        #  priority: :high
+        # },
         transcription: %MembraneTranscription.Element{
-          buffer_duration: 5,
+          buffer_duration: 10,
           fancy?: true,
           priority: :normal
         },
@@ -73,7 +73,7 @@ defmodule Lively.Media.Pipeline do
       init_link_fn.()
       |> to(:timestamper)
       |> to(:levels)
-      |> to(:instant_transcription)
+      # |> to(:instant_transcription)
       |> to(:transcription)
       |> to(:fake_out)
     ]
@@ -91,11 +91,13 @@ defmodule Lively.Media.Pipeline do
 
   @impl true
   def handle_notification(
-        {:transcribed, %{results: [%{text: text}]}, part, start, stop},
+        {:transcribed, text, part, start, stop},
         :transcription,
         _context,
         state
       ) do
+    IO.puts("sending transcripts")
+
     Phoenix.PubSub.broadcast!(
       Lively.PubSub,
       "transcripts",
@@ -107,7 +109,7 @@ defmodule Lively.Media.Pipeline do
 
   @impl true
   def handle_notification(
-        {:transcribed, %{results: [%{text: text}]}, part, start, stop},
+        {:transcribed, text, part, start, stop},
         :instant_transcription,
         _context,
         state

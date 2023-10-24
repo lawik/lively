@@ -131,6 +131,8 @@ defmodule LivelyWeb.MediaLive do
 
   @impl true
   def handle_info({:transcribed, text, part, start, stop}, socket) do
+    IO.inspect(text, label: "transcribed")
+
     last_text =
       case socket.assigns.transcripts do
         [{_, _, {:safe, _skip}} | _] -> ""
