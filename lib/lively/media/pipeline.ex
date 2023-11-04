@@ -61,7 +61,7 @@ defmodule Lively.Media.Pipeline do
         #  priority: :high
         # },
         transcription: %MembraneTranscription.Element{
-          buffer_duration: 10,
+          buffer_duration: 5,
           fancy?: true,
           priority: :normal
         },
